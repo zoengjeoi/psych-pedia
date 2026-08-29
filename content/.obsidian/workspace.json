@@ -4,39 +4,20 @@
     "type": "split",
     "children": [
       {
-        "id": "c42232e08567fc95",
+        "id": "fb56e5395f796b86",
         "type": "tabs",
         "children": [
           {
-            "id": "480cb9e103863fd2",
+            "id": "78cb68d0e6c9508c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "drugs/alprazolam.md",
-                "mode": "source",
-                "source": true
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "alprazolam"
-            }
-          },
-          {
-            "id": "2b939e67ecce183c",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "benzodiazepines.md",
-                "mode": "source",
-                "source": true
-              },
-              "icon": "lucide-file",
-              "title": "benzodiazepines"
+              "title": "新标签页"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -200,34 +181,34 @@
       "bases:新建数据库": false
     }
   },
-  "active": "2b939e67ecce183c",
+  "active": "78cb68d0e6c9508c",
   "lastOpenFiles": [
+    "drugs/buspirone.md",
+    "drugs/KarXT.md",
+    "drugs/venlafaxine.md",
+    "drugs/valproate.md",
+    "drugs/propranolol.md",
+    "drugs/sulpiride.md",
+    "drugs/pregabalin.md",
+    "drugs/bupropion.md",
+    "drugs/clomipramine.md",
+    "drugs/duloxetine.md",
+    "drugs/clozapine.md",
     "drugs/alprazolam.md",
+    "drugs/fluvoxamine.md",
+    "drugs/reboxetine.md",
+    "drugs/risperidone.md",
+    "drugs/quetiapine.md",
+    "drugs/paliperidone.md",
+    "drugs/paroxetine.md",
+    "drugs/olanzapine.md",
+    "drugs/haloperidol.md",
     "benzodiazepines.md",
     "principles/gabaa.md",
     "principles/h1.md",
     "principles/d3.md",
-    "drugs/buspirone.md",
-    "drugs/propranolol.md",
-    "drugs/pregabalin.md",
-    "drugs/paliperidone.md",
-    "drugs/paroxetine.md",
-    "drugs/KarXT.md",
-    "drugs/fluvoxamine.md",
     "drugs/amisulpride.md",
     "drugs/atomoxetine.md",
-    "drugs/bupropion.md",
-    "drugs/sulpiride.md",
-    "drugs/quetiapine.md",
-    "drugs/reboxetine.md",
-    "drugs/sertraline.md",
-    "drugs/tianeptine.md",
-    "drugs/valproate.md",
-    "drugs/ziprasidone.md",
-    "drugs/methylphenidate.md",
-    "drugs/lamotrigine.md",
-    "drugs/flupentixol.md",
-    "drugs/escitalopram.md",
     "未命名 2.base",
     "未命名 2.canvas",
     "未命名 1.canvas",
