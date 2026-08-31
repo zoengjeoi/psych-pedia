@@ -2,7 +2,8 @@
 id: "agomelatine"
 name_cn: "阿戈美拉汀"
 name_en: "Agomelatine"
-category: "褪黑素受体激动剂"
+categories:
+  - "褪黑素受体激动剂"
 tags:
   - "褪黑素激动"
   - "调节节律"

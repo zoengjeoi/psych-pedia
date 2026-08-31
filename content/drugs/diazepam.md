@@ -2,6 +2,8 @@
 id: "diazepam"
 name_cn: "地西泮 (安定)"
 name_en: "Diazepam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "长效BZD"
   - "强力肌松作用"
@@ -50,8 +52,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 ## 概况

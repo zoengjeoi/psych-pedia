@@ -149,6 +149,7 @@ const PrincipleDetail: React.FC<PrincipleDetailProps> = ({
           title={principle.title}
           isDarkMode={isDarkMode}
           editable={false}
+          onNavigate={onNavigate}
         />
       </div>
     </div>

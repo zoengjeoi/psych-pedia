@@ -40,7 +40,7 @@ export interface Pearl {
   content: string;
 }
 
-export type NavigateType = 'drug' | 'principle' | 'enzyme';
+export type NavigateType = 'home' | 'drug' | 'principle' | 'enzyme';
 
 export interface ImageData {
   alt: string;

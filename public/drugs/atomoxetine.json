@@ -2,7 +2,9 @@
   "id": "atomoxetine",
   "name_cn": "托莫西汀",
   "name_en": "Atomoxetine",
-  "category": "ADHD 非刺激类药物",
+  "categories": [
+    "ADHD 非兴奋剂"
+  ],
   "tags": [
     "非兴奋剂",
     "全天有效",

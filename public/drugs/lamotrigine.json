@@ -2,7 +2,9 @@
   "id": "lamotrigine",
   "name_cn": "拉莫三嗪",
   "name_en": "Lamotrigine",
-  "category": "情绪稳定剂",
+  "categories": [
+    "心境稳定剂"
+  ],
   "tags": [
     "双相抑郁",
     "慢滴定",

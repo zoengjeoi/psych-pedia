@@ -2,7 +2,8 @@
 id: "pregabalin"
 name_cn: "普瑞巴林"
 name_en: "Pregabalin"
-category: "抗焦虑/镇痛药"
+categories:
+  - "慢性疼痛辅助药"
 tags:
   - "GAD"
   - "神经痛"

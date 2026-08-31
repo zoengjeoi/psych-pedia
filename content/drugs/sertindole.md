@@ -2,7 +2,8 @@
 id: "sertindole"
 name_cn: "舍吲哚"
 name_en: "Sertindole"
-category: "第二代抗精神病药（SGA）"
+categories:
+  - "SGA（非典型抗精神病药）"
 tags:
   - "高D2/5HT2A"
   - "低EPS"

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import PinyinMatch from 'pinyin-match';
 import { Drug, NavigateType, Principle } from '../types';
+import { DRUG_CATEGORY_ORDER } from '../constants';
 
 interface SidebarProps {
   drugs: Drug[];
@@ -12,6 +13,10 @@ interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
+
+// 受体类(受体/转运体/离子通道)归入"受体百科",其余(假说等)归入"生物学假说"
+const isReceptorLike = (type?: string) =>
+  type === 'receptor' || type === 'transporter' || type === 'ion_channel';
 
 const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNavigate, isOpen, setIsOpen, isCollapsed, setIsCollapsed }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,13 +64,18 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
         grouped[cat].push(d);
       });
     });
-    return grouped;
+    // 按主流分类顺序排序
+    return Object.entries(grouped).sort((a, b) => {
+      const ia = DRUG_CATEGORY_ORDER.indexOf(a[0]);
+      const ib = DRUG_CATEGORY_ORDER.indexOf(b[0]);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
   }, [filteredDrugs]);
 
   const principleGroups = useMemo(() => {
     const grouped: Record<string, Principle[]> = {};
     filteredPrinciples.forEach(p => {
-      const cat = p.type === 'receptor' ? '受体百科' : '生物学假说';
+      const cat = isReceptorLike(p.type) ? '受体百科' : '生物学假说';
       if (!grouped[cat]) grouped[cat] = [];
       grouped[cat].push(p);
     });
@@ -79,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
       // Auto-expand if results are few (<= 20)
       if (totalItems > 0 && totalItems <= 20) {
         const newExpanded = new Set<string>();
-        Object.keys(drugGroups).forEach(cat => newExpanded.add(cat));
+        drugGroups.forEach(([cat]) => newExpanded.add(cat));
         Object.keys(principleGroups).forEach(cat => newExpanded.add(cat));
         setExpandedCategories(newExpanded);
       } else {
@@ -159,7 +169,11 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
         >
           <div className="p-4 border-b border-slate-200 dark:border-medical-line flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+              <h1
+                onClick={() => onNavigate('home', '')}
+                className="font-serif text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1 cursor-pointer select-none"
+                title="回到首页"
+              >
                 <span className="text-gradient">PsychPedia</span>
               </h1>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">v2.0 Beta</p>
@@ -194,11 +208,27 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
           </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-6 px-2">
+            {/* 首页 */}
+            <button
+              onClick={() => handleItemClick('home', '')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 mb-3 ${
+                currentView.type === 'home'
+                  ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent text-cyan-700 dark:text-cyan-300 shadow-[inset_3px_0_0_0_rgba(14,165,233,0.9)]'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-medical-surfaceAlt hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+              title="首页"
+            >
+              <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10" /></svg>
+              </span>
+              <span className="text-sm font-medium">首页</span>
+            </button>
+
             {Object.entries(principleGroups).map(([category, items]) => (
               <div key={category} className="mb-6">
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors gap-2"
+                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors gap-2"
                 >
                   <span className="text-left flex-1 break-words">{category}</span>
                   <svg className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${expandedCategories.has(category) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
@@ -227,11 +257,11 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
               </div>
             ))}
 
-            {Object.entries(drugGroups).map(([category, items]) => (
+            {drugGroups.map(([category, items]) => (
               <div key={category} className="mb-6">
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors gap-2"
+                  className="w-full flex items-center justify-between px-3 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors gap-2"
                 >
                   <span className="text-left flex-1 break-words">{category}</span>
                   <svg className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${expandedCategories.has(category) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>

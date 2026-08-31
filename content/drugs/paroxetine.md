@@ -2,7 +2,8 @@
 id: "paroxetine"
 name_cn: "帕罗西汀"
 name_en: "Paroxetine"
-category: "选择性血清素转运体抑制剂（SSRI）"
+categories:
+  - "SSRI（选择性5-羟色胺再摄取抑制剂）"
 tags:
   - "强效抗焦虑"
   - "抗胆碱能"

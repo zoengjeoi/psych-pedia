@@ -2,7 +2,8 @@
 id: "haloperidol"
 name_cn: "氟哌啶醇"
 name_en: "Haloperidol"
-category: "第一代抗精神病药 (FGA)"
+categories:
+  - "FGA（典型抗精神病药）"
 tags:
   - "高价D2"
   - "谵妄"

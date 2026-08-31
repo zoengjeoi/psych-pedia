@@ -3,7 +3,7 @@ id: "desvenlafaxine"
 name_cn: "去甲文拉法辛"
 name_en: "Desvenlafaxine"
 categories:
-  - "5-HT和NE再摄取抑制剂（SNRI）"
+  - "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）"
 tags:
   - "文拉法辛活性代谢物"
   - "跨过CYP2D6"

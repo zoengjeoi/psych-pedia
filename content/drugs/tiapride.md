@@ -3,8 +3,7 @@ id: "tiapride"
 name_cn: "硫必利"
 name_en: "Tiapride"
 categories:
-  - "第一代抗精神病药（FGA）"
-  - "苯甲酰胺类"
+  - "FGA（典型抗精神病药）"
 tags:
   - "抽动症经典药"
   - "老年激越首选"

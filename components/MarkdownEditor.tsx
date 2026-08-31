@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import { NavigateType } from '../types';
+import { usePrinciples, buildPrinciplePatterns, linkMarkdownPrinciples } from '../usePrinciples';
 
 interface MarkdownEditorProps {
   content: string;
   onChange: (content: string) => void;
   isDarkMode: boolean;
   readOnly?: boolean;
+  onNavigate?: (type: NavigateType, id: string) => void;
 }
 
 // 提取文本内容用于生成 ID
@@ -45,13 +48,22 @@ const Heading = ({ level, children, ...props }: any) => {
   return <Tag id={id} className={getClassName(level)} {...props}>{children}</Tag>;
 };
 
-const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ 
-  content, 
-  onChange, 
+const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
+  content,
+  onChange,
   isDarkMode,
-  readOnly = false
+  readOnly = false,
+  onNavigate
 }) => {
   const [isPreview, setIsPreview] = useState(true);
+
+  // 原理词条自动跳转:仅对预览渲染的 markdown 做预处理,编辑态 textarea 保持原文
+  const principles = usePrinciples();
+  const patterns = useMemo(() => buildPrinciplePatterns(principles), [principles]);
+  const processedContent = useMemo(
+    () => (isPreview ? linkMarkdownPrinciples(content, patterns) : content),
+    [content, patterns, isPreview]
+  );
 
   return (
     <div className="markdown-editor-container">
@@ -154,9 +166,28 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
               pre: ({ node, ...props }) => (
                 <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg overflow-x-auto mb-3" {...props} />
               ),
-              a: ({ node, ...props }) => (
-                <a className="text-medical-primary dark:text-medical-primaryBright hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
-              ),
+              a: ({ node, href, children, ...props }) => {
+                if (href && href.startsWith('/principle/')) {
+                  const pid = href.replace('/principle/', '');
+                  return (
+                    <a
+                      className="text-medical-primary dark:text-medical-primaryBright font-medium hover:underline cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.('principle', pid);
+                      }}
+                      title="查看原理词条"
+                    >
+                      {children}
+                    </a>
+                  );
+                }
+                return (
+                  <a href={href} className="text-medical-primary dark:text-medical-primaryBright hover:underline" target="_blank" rel="noopener noreferrer" {...props}>
+                    {children}
+                  </a>
+                );
+              },
               table: ({ node, ...props }) => (
                 <div className="overflow-x-auto mb-4 -mx-2 px-2">
                   <table className="min-w-full divide-y divide-slate-200 dark:divide-medical-line border border-slate-200 dark:border-medical-line text-xs sm:text-sm" {...props} />
@@ -182,7 +213,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
               ),
             }}
           >
-            {content || '*暂无内容*'}
+            {processedContent || '*暂无内容*'}
           </ReactMarkdown>
         </div>
       )}

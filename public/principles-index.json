@@ -128,5 +128,30 @@
       "description": ""
     }
   ],
-  "hypotheses": []
+  "hypotheses": [
+    {
+      "id": "dopamine-hypothesis",
+      "title": "多巴胺假说",
+      "type": "hypothesis",
+      "description": ""
+    },
+    {
+      "id": "glutamate-hypothesis",
+      "title": "谷氨酸/NMDA 假说",
+      "type": "hypothesis",
+      "description": ""
+    },
+    {
+      "id": "monoamine-hypothesis",
+      "title": "单胺假说",
+      "type": "hypothesis",
+      "description": ""
+    },
+    {
+      "id": "neuroinflammation-hypothesis",
+      "title": "神经炎症假说",
+      "type": "hypothesis",
+      "description": ""
+    }
+  ]
 }

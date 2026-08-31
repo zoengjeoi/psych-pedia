@@ -2,6 +2,8 @@
 id: "clonazepam"
 name_cn: "氯硝西泮"
 name_en: "Clonazepam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "长效BZD"
   - "高阻滞强效力"
@@ -50,8 +52,6 @@ market_info:
   price: "$"
   insurance: "甲类医保"
   pregnancy: "D类"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 氯硝西泮 (Clonazepam)

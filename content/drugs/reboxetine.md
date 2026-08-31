@@ -2,7 +2,8 @@
 id: "reboxetine"
 name_cn: "瑞波西汀"
 name_en: "Reboxetine"
-category: "去甲肾上腺素转运体抑制剂（NRI）"
+categories:
+  - "NRI（选择性去甲肾上腺素再摄取抑制剂）"
 tags:
   - "纯NRI"
   - "激活"

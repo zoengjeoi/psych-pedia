@@ -3,8 +3,7 @@ id: "memantine"
 name_cn: "美金刚 (易倍申)"
 name_en: "Memantine"
 categories:
-  - "NMDA受体拮抗剂"
-  - "促认知药"
+  - "促认知药（抗痴呆）"
 tags:
   - "中重度痴呆首选"
   - "神经保护作用"

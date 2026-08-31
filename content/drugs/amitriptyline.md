@@ -2,6 +2,9 @@
 id: "amitriptyline"
 name_cn: "阿米替林"
 name_en: "Amitriptyline"
+categories:
+  - "TCA（三环类抗抑郁药）"
+  - "慢性疼痛辅助药"
 tags:
   - "慢性神经痛金标准"
   - "极强镇静催眠"
@@ -50,9 +53,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "三环类抗抑郁药（TCA）"
-  - "慢性疼痛辅助药"
 ---
 
 # 阿米替林 (Amitriptyline)

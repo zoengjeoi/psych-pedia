@@ -2,7 +2,9 @@
   "id": "propranolol",
   "name_cn": "普萘洛尔",
   "name_en": "Propranolol",
-  "category": "抗焦虑药",
+  "categories": [
+    "β受体阻滞剂"
+  ],
   "tags": [
     "β受体阻滞剂",
     "缓解震颤",

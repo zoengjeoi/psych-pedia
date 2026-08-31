@@ -2,7 +2,8 @@
 id: "chlorpromazine"
 name_cn: "氯丙嗪"
 name_en: "Chlorpromazine"
-category: "第一代抗精神病药 (FGA)"
+categories:
+  - "FGA（典型抗精神病药）"
 tags:
   - "经典FGA"
   - "强镇静"

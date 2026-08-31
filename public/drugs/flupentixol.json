@@ -2,7 +2,9 @@
   "id": "flupentixol",
   "name_cn": "氟哌噻吨",
   "name_en": "Flupentixol",
-  "category": "第一代抗精神病药 (FGA)",
+  "categories": [
+    "FGA（典型抗精神病药）"
+  ],
   "tags": [
     "强效D2阻断",
     "激活",

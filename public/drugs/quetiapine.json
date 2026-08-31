@@ -2,7 +2,9 @@
   "id": "quetiapine",
   "name_cn": "喹硫平",
   "name_en": "Quetiapine",
-  "category": "第二代抗精神病药（SGA）",
+  "categories": [
+    "SGA（非典型抗精神病药）"
+  ],
   "tags": [
     "镇静",
     "低EPS",

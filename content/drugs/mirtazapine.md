@@ -2,7 +2,8 @@
 id: "mirtazapine"
 name_cn: "米氮平"
 name_en: "Mirtazapine"
-category: "去甲肾-特异性血清素抗抑郁药（NaSSA）"
+categories:
+  - "NaSSA（去甲肾上腺素和特异性5-羟色胺能抗抑郁药）"
 tags:
   - "增食欲"
   - "助眠"

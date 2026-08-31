@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MarkdownEditor from './MarkdownEditor';
 import TableOfContents from './TableOfContents';
+import { NavigateType } from '../types';
 
 interface WikiContentProps {
   content?: string;
@@ -8,6 +9,7 @@ interface WikiContentProps {
   isDarkMode: boolean;
   onSave?: (content: string) => void;
   editable?: boolean;
+  onNavigate?: (type: NavigateType, id: string) => void;
 }
 
 const WikiContent: React.FC<WikiContentProps> = ({
@@ -15,7 +17,8 @@ const WikiContent: React.FC<WikiContentProps> = ({
   title,
   isDarkMode,
   onSave,
-  editable = false
+  editable = false,
+  onNavigate
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -117,6 +120,7 @@ const WikiContent: React.FC<WikiContentProps> = ({
               content={editContent}
               onChange={setEditContent}
               isDarkMode={isDarkMode}
+              onNavigate={onNavigate}
             />
           ) : (
             <div className="markdown-preview">
@@ -125,6 +129,7 @@ const WikiContent: React.FC<WikiContentProps> = ({
                 onChange={() => {}}
                 isDarkMode={isDarkMode}
                 readOnly={true}
+                onNavigate={onNavigate}
               />
             </div>
           )}

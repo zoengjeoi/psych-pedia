@@ -3,8 +3,7 @@ id: "levetiracetam"
 name_cn: "左乙拉西坦 (开浦兰)"
 name_en: "Levetiracetam"
 categories:
-  - "抗癫痫药"
-  - "心境稳定剂(辅助)"
+  - "抗癫痫药（心境辅助）"
 tags:
   - "肝功能绝对安全"
   - "零药物相互作用"

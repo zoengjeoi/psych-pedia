@@ -2,6 +2,8 @@
 id: "oxazepam"
 name_cn: "奥沙西泮"
 name_en: "Oxazepam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "短中效BZD"
   - "肝功能绝对友好"
@@ -50,8 +52,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 奥沙西泮 (Oxazepam)

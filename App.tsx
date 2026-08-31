@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import DrugDetail from './components/DrugDetail';
 import PrincipleDetail from './components/PrincipleDetail';
 import EnzymeSummary from './components/EnzymeSummary';
+import Home from './components/Home';
 import { Drug, NavigateType, Principle } from './types';
 
 // Lightweight index types for sidebar
@@ -40,8 +41,8 @@ const App: React.FC = () => {
   
   // Router State
   const [currentView, setCurrentView] = useState<ViewState>({
-    type: 'drug',
-    id: '' // Will be set once drugs are loaded
+    type: 'home',
+    id: ''
   });
   const [history, setHistory] = useState<ViewState[]>([]);
 
@@ -57,9 +58,6 @@ const App: React.FC = () => {
         if (!response.ok) throw new Error('Failed to load drugs-index.json');
         const data = await response.json();
         setDrugIndex(data.drugs);
-        if (data.drugs.length > 0) {
-          setCurrentView({ type: 'drug', id: data.drugs[0].id });
-        }
       } catch (error) {
         console.error('Error loading drugs index:', error);
         setDrugIndex([]);
@@ -143,6 +141,8 @@ const App: React.FC = () => {
     if (history.length === 0) return null;
     const last = history[history.length - 1];
     
+    if (last.type === 'home') return '首页';
+
     if (last.type === 'drug') {
       const d = drugIndex.find(x => x.id === last.id);
       return d ? d.name_cn : '药物详情';
@@ -158,6 +158,17 @@ const App: React.FC = () => {
 
     if (drugsLoading || principlesLoading) {
       return <div className="p-10 text-center text-slate-500 dark:text-slate-400">加载中...</div>;
+    }
+
+    if (currentView.type === 'home') {
+      return (
+        <Home
+          drugs={drugIndex}
+          principles={principleIndex}
+          onNavigate={handleSidebarNavigate}
+          isDarkMode={isDarkMode}
+        />
+      );
     }
 
     if (currentView.type === 'drug') {

@@ -2,7 +2,8 @@
 id: "karxt"
 name_cn: "呫诺美林曲司氯铵 (凯捷乐)"
 name_en: "Xanomeline-Trospium (KarXT)"
-category: "毒蕈碱激动剂（新型抗精神病药）"
+categories:
+  - "新型抗精神病药"
 tags:
   - "M1/M4激动剂"
   - "首创新机制"

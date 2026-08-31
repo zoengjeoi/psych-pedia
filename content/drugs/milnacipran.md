@@ -2,6 +2,9 @@
 id: "milnacipran"
 name_cn: "米那普仑"
 name_en: "Milnacipran"
+categories:
+  - "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）"
+  - "慢性疼痛辅助药"
 tags:
   - "等比例双重抑制"
   - "纤维肌痛首选"
@@ -50,8 +53,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "5-HT和NE再摄取抑制剂（SNRI）"
 ---
 
 # 米那普仑 (Milnacipran)

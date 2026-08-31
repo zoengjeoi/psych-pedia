@@ -2,6 +2,8 @@
 id: "perphenazine"
 name_cn: "奋乃静"
 name_en: "Perphenazine"
+categories:
+  - "FGA（典型抗精神病药）"
 tags:
   - "中等效价"
   - "经典抗精神病"
@@ -49,8 +51,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "第一代抗精神病药（FGA）"
 ---
 
 # 奋乃静 (Perphenazine)

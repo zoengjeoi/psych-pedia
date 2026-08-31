@@ -2,6 +2,8 @@
 id: "midazolam"
 name_cn: "咪达唑仑"
 name_en: "Midazolam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "超短效BZD"
   - "起效秒级(IV)"
@@ -49,8 +51,6 @@ market_info:
   price: "$"
   insurance: "甲类医保"
   pregnancy: "D类"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 咪达唑仑 (Midazolam)

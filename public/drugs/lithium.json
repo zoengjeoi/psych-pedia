@@ -2,7 +2,9 @@
   "id": "lithium",
   "name_cn": "碳酸锂",
   "name_en": "Lithium Carbonate",
-  "category": "情绪稳定剂",
+  "categories": [
+    "心境稳定剂"
+  ],
   "tags": [
     "自杀预防",
     "治疗窗窄",

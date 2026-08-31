@@ -2,7 +2,8 @@
 id: "valproate"
 name_cn: "丙戊酸钠"
 name_en: "Sodium Valproate"
-category: "情绪稳定剂"
+categories:
+  - "心境稳定剂"
 tags:
   - "广谱"
   - "致畸"

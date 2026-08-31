@@ -2,7 +2,9 @@
   "id": "sulpiride",
   "name_cn": "舒必利",
   "name_en": "Sulpiride",
-  "category": "第一代抗精神病药 (FGA)",
+  "categories": [
+    "FGA（典型抗精神病药）"
+  ],
   "tags": [
     "选择性D2",
     "高泌乳素",

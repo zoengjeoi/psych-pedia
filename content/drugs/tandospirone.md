@@ -2,6 +2,8 @@
 id: "tandospirone"
 name_cn: "坦度螺酮"
 name_en: "Tandospirone"
+categories:
+  - "抗焦虑药（5-HT1A受体部分激动剂）"
 tags:
   - "真正的无成瘾"
   - "无肌松不嗜睡"
@@ -49,9 +51,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "非苯二氮䓬类抗焦虑药"
-  - "5-HT1A受体部分激动剂"
 ---
 
 # 坦度螺酮 (Tandospirone)

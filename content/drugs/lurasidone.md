@@ -2,7 +2,8 @@
 id: "lurasidone"
 name_cn: "鲁拉西酮"
 name_en: "Lurasidone"
-category: "第二代抗精神病药（SGA）"
+categories:
+  - "SGA（非典型抗精神病药）"
 tags:
   - "必须餐后"
   - "双相抑郁"

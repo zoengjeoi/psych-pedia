@@ -2,7 +2,9 @@
   "id": "zolpidem",
   "name_cn": "唑吡坦",
   "name_en": "Zolpidem",
-  "category": "非苯二氮䓬类催眠药（Z-Drug）",
+  "categories": [
+    "Z-Drug（非苯二氮䓬类催眠药）"
+  ],
   "tags": [
     "入睡困难",
     "短效",

@@ -2,7 +2,9 @@
   "id": "buspirone",
   "name_cn": "丁螺环酮",
   "name_en": "Buspirone",
-  "category": "抗焦虑药",
+  "categories": [
+    "抗焦虑药（5-HT1A受体部分激动剂）"
+  ],
   "tags": [
     "5-HT1A激动",
     "不镇静",

@@ -5,7 +5,9 @@
       "id": "agomelatine",
       "name_cn": "阿戈美拉汀",
       "name_en": "Agomelatine",
-      "category": "褪黑素受体激动剂",
+      "categories": [
+        "褪黑素受体激动剂"
+      ],
       "tags": [
         "褪黑素激动",
         "调节节律",
@@ -17,7 +19,7 @@
       "name_cn": "阿普唑仑",
       "name_en": "Alprazolam (Xanax)",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "中短效BZD",
@@ -31,7 +33,9 @@
       "id": "amisulpride",
       "name_cn": "氨磺必利",
       "name_en": "Amisulpride",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "D2/D3阻断",
         "不经肝脏代谢",
@@ -43,7 +47,7 @@
       "name_cn": "阿米替林",
       "name_en": "Amitriptyline",
       "categories": [
-        "三环类抗抑郁药（TCA）",
+        "TCA（三环类抗抑郁药）",
         "慢性疼痛辅助药"
       ],
       "tags": [
@@ -59,7 +63,9 @@
       "id": "aripiprazole",
       "name_cn": "阿立哌唑",
       "name_en": "Aripiprazole",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "D2部分激动剂",
         "不镇静",
@@ -70,7 +76,9 @@
       "id": "atomoxetine",
       "name_cn": "托莫西汀",
       "name_en": "Atomoxetine",
-      "category": "ADHD 非刺激类药物",
+      "categories": [
+        "ADHD 非兴奋剂"
+      ],
       "tags": [
         "非兴奋剂",
         "全天有效",
@@ -82,7 +90,7 @@
       "name_cn": "布南色林",
       "name_en": "Blonanserin",
       "categories": [
-        "第二代抗精神病药（SGA）"
+        "SGA（非典型抗精神病药）"
       ],
       "tags": [
         "对阴性症状有效",
@@ -97,8 +105,8 @@
       "name_cn": "安非他酮",
       "name_en": "Bupropion",
       "categories": [
-        "去甲肾-多巴胺转运体抑制剂（NDRI）",
-        "非5HT机制抗抑郁药"
+        "NDRI（去甲肾上腺素和多巴胺再摄取抑制剂）",
+        "ADHD 非兴奋剂"
       ],
       "tags": [
         "戒烟",
@@ -111,7 +119,9 @@
       "id": "buspirone",
       "name_cn": "丁螺环酮",
       "name_en": "Buspirone",
-      "category": "抗焦虑药",
+      "categories": [
+        "抗焦虑药（5-HT1A受体部分激动剂）"
+      ],
       "tags": [
         "5-HT1A激动",
         "不镇静",
@@ -122,7 +132,9 @@
       "id": "carbamazepine",
       "name_cn": "卡马西平",
       "name_en": "Carbamazepine",
-      "category": "情绪稳定剂",
+      "categories": [
+        "心境稳定剂"
+      ],
       "tags": [
         "双相躁狂",
         "肝酶诱导",
@@ -133,7 +145,9 @@
       "id": "chlorpromazine",
       "name_cn": "氯丙嗪",
       "name_en": "Chlorpromazine",
-      "category": "第一代抗精神病药 (FGA)",
+      "categories": [
+        "FGA（典型抗精神病药）"
+      ],
       "tags": [
         "经典FGA",
         "强镇静",
@@ -145,7 +159,9 @@
       "id": "clomipramine",
       "name_cn": "氯米帕明",
       "name_en": "Clomipramine",
-      "category": "三环抗抑郁药（TCA）",
+      "categories": [
+        "TCA（三环类抗抑郁药）"
+      ],
       "tags": [
         "OCD金标准",
         "强抗胆碱",
@@ -157,7 +173,7 @@
       "name_cn": "氯硝西泮",
       "name_en": "Clonazepam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "长效BZD",
@@ -173,8 +189,8 @@
       "name_cn": "可乐定",
       "name_en": "Clonidine",
       "categories": [
-        "α2肾上腺素受体激动剂",
-        "抗高血压药"
+        "α2受体激动剂",
+        "ADHD 非兴奋剂"
       ],
       "tags": [
         "α2受体激动",
@@ -187,7 +203,9 @@
       "id": "clozapine",
       "name_cn": "氯氮平",
       "name_en": "Clozapine",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "难治性金标准",
         "自杀干预",
@@ -199,7 +217,7 @@
       "name_cn": "去甲文拉法辛",
       "name_en": "Desvenlafaxine",
       "categories": [
-        "5-HT和NE再摄取抑制剂（SNRI）"
+        "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）"
       ],
       "tags": [
         "文拉法辛活性代谢物",
@@ -214,7 +232,7 @@
       "name_cn": "地西泮 (安定)",
       "name_en": "Diazepam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "长效BZD",
@@ -230,8 +248,7 @@
       "name_cn": "多奈哌齐 (安理申)",
       "name_en": "Donepezil",
       "categories": [
-        "胆碱酯酶抑制剂（AChEI）",
-        "促认知药"
+        "促认知药（抗痴呆）"
       ],
       "tags": [
         "阿尔茨海默首选药",
@@ -245,7 +262,10 @@
       "id": "duloxetine",
       "name_cn": "度洛西汀",
       "name_en": "Duloxetine",
-      "category": "血清素-去甲肾上腺素转运体抑制剂（SNRI）",
+      "categories": [
+        "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）",
+        "慢性疼痛辅助药"
+      ],
       "tags": [
         "抗抑郁",
         "镇痛",
@@ -256,7 +276,9 @@
       "id": "escitalopram",
       "name_cn": "艾司西酞普兰",
       "name_en": "Escitalopram",
-      "category": "选择性血清素转运体抑制剂（SSRI）",
+      "categories": [
+        "SSRI（选择性5-羟色胺再摄取抑制剂）"
+      ],
       "tags": [
         "高选择性",
         "起效快",
@@ -268,7 +290,7 @@
       "name_cn": "艾司唑仑 (舒乐安定)",
       "name_en": "Estazolam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "中效BZD",
@@ -283,7 +305,9 @@
       "id": "eszopiclone",
       "name_cn": "右佐匹克隆",
       "name_en": "Eszopiclone",
-      "category": "非苯二氮䓬类催眠药（Z-Drug）",
+      "categories": [
+        "Z-Drug（非苯二氮䓬类催眠药）"
+      ],
       "tags": [
         "早醒",
         "金属味",
@@ -294,7 +318,9 @@
       "id": "fluoxetine",
       "name_cn": "氟西汀",
       "name_en": "Fluoxetine",
-      "category": "选择性血清素转运体抑制剂（SSRI）",
+      "categories": [
+        "SSRI（选择性5-羟色胺再摄取抑制剂）"
+      ],
       "tags": [
         "长半衰期",
         "激活效应",
@@ -306,7 +332,9 @@
       "id": "flupentixol",
       "name_cn": "氟哌噻吨",
       "name_en": "Flupentixol",
-      "category": "第一代抗精神病药 (FGA)",
+      "categories": [
+        "FGA（典型抗精神病药）"
+      ],
       "tags": [
         "强效D2阻断",
         "激活",
@@ -318,9 +346,9 @@
       "name_cn": "氟哌噻吨美利曲辛 (黛力新)",
       "name_en": "Flupentixol-Melitracen (Deanxit)",
       "categories": [
-        "复方抗抑郁/抗焦虑药",
-        "第一代抗精神病药（FGA）",
-        "三环类抗抑郁药（TCA）"
+        "复方制剂（抗抑郁+抗精神病）",
+        "FGA（典型抗精神病药）",
+        "TCA（三环类抗抑郁药）"
       ],
       "tags": [
         "中国门诊神药",
@@ -335,7 +363,9 @@
       "id": "fluvoxamine",
       "name_cn": "氟伏沙明",
       "name_en": "Fluvoxamine",
-      "category": "选择性血清素转运体抑制剂（SSRI）",
+      "categories": [
+        "SSRI（选择性5-羟色胺再摄取抑制剂）"
+      ],
       "tags": [
         "Sigma1激动",
         "强迫症",
@@ -347,9 +377,8 @@
       "name_cn": "加巴喷丁",
       "name_en": "Gabapentin",
       "categories": [
-        "电压门控钙通道(α2δ)配体",
-        "抗惊厥药",
-        "非传统抗焦虑药"
+        "抗癫痫药（心境辅助）",
+        "慢性疼痛辅助药"
       ],
       "tags": [
         "神经痛辅助",
@@ -364,7 +393,9 @@
       "id": "haloperidol",
       "name_cn": "氟哌啶醇",
       "name_en": "Haloperidol",
-      "category": "第一代抗精神病药 (FGA)",
+      "categories": [
+        "FGA（典型抗精神病药）"
+      ],
       "tags": [
         "高价D2",
         "谵妄",
@@ -375,7 +406,9 @@
       "id": "karxt",
       "name_cn": "呫诺美林曲司氯铵 (凯捷乐)",
       "name_en": "Xanomeline-Trospium (KarXT)",
-      "category": "毒蕈碱激动剂（新型抗精神病药）",
+      "categories": [
+        "新型抗精神病药"
+      ],
       "tags": [
         "M1/M4激动剂",
         "首创新机制",
@@ -386,7 +419,9 @@
       "id": "lamotrigine",
       "name_cn": "拉莫三嗪",
       "name_en": "Lamotrigine",
-      "category": "情绪稳定剂",
+      "categories": [
+        "心境稳定剂"
+      ],
       "tags": [
         "双相抑郁",
         "慢滴定",
@@ -398,8 +433,7 @@
       "name_cn": "左乙拉西坦 (开浦兰)",
       "name_en": "Levetiracetam",
       "categories": [
-        "抗癫痫药",
-        "心境稳定剂(辅助)"
+        "抗癫痫药（心境辅助）"
       ],
       "tags": [
         "肝功能绝对安全",
@@ -413,7 +447,9 @@
       "id": "lithium",
       "name_cn": "碳酸锂",
       "name_en": "Lithium Carbonate",
-      "category": "情绪稳定剂",
+      "categories": [
+        "心境稳定剂"
+      ],
       "tags": [
         "自杀预防",
         "治疗窗窄",
@@ -425,7 +461,7 @@
       "name_cn": "劳拉西泮",
       "name_en": "Lorazepam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "中效BZD",
@@ -440,7 +476,9 @@
       "id": "lurasidone",
       "name_cn": "鲁拉西酮",
       "name_en": "Lurasidone",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "必须餐后",
         "双相抑郁",
@@ -452,8 +490,7 @@
       "name_cn": "美金刚 (易倍申)",
       "name_en": "Memantine",
       "categories": [
-        "NMDA受体拮抗剂",
-        "促认知药"
+        "促认知药（抗痴呆）"
       ],
       "tags": [
         "中重度痴呆首选",
@@ -467,7 +504,9 @@
       "id": "methylphenidate",
       "name_cn": "哌甲酯",
       "name_en": "Methylphenidate",
-      "category": "ADHD 刺激类药物",
+      "categories": [
+        "ADHD 中枢兴奋剂"
+      ],
       "tags": [
         "多巴胺阻断",
         "专注力",
@@ -479,7 +518,7 @@
       "name_cn": "咪达唑仑",
       "name_en": "Midazolam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "超短效BZD",
@@ -494,7 +533,8 @@
       "name_cn": "米那普仑",
       "name_en": "Milnacipran",
       "categories": [
-        "5-HT和NE再摄取抑制剂（SNRI）"
+        "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）",
+        "慢性疼痛辅助药"
       ],
       "tags": [
         "等比例双重抑制",
@@ -509,7 +549,9 @@
       "id": "mirtazapine",
       "name_cn": "米氮平",
       "name_en": "Mirtazapine",
-      "category": "去甲肾-特异性血清素抗抑郁药（NaSSA）",
+      "categories": [
+        "NaSSA（去甲肾上腺素和特异性5-羟色胺能抗抑郁药）"
+      ],
       "tags": [
         "增食欲",
         "助眠",
@@ -520,7 +562,9 @@
       "id": "olanzapine",
       "name_cn": "奥氮平",
       "name_en": "Olanzapine",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "强效",
         "镇静",
@@ -532,7 +576,7 @@
       "name_cn": "奥沙西泮",
       "name_en": "Oxazepam",
       "categories": [
-        "苯二氮䓬类 (BZD)"
+        "BZD（苯二氮䓬类）"
       ],
       "tags": [
         "短中效BZD",
@@ -547,7 +591,9 @@
       "id": "oxcarbazepine",
       "name_cn": "奥卡西平",
       "name_en": "Oxcarbazepine",
-      "category": "情绪稳定剂",
+      "categories": [
+        "心境稳定剂"
+      ],
       "tags": [
         "钠通道阻滞",
         "低钠血症",
@@ -558,7 +604,9 @@
       "id": "paliperidone",
       "name_cn": "帕利哌酮",
       "name_en": "Paliperidone",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "肝脏安全",
         "OROS技术",
@@ -569,7 +617,9 @@
       "id": "paroxetine",
       "name_cn": "帕罗西汀",
       "name_en": "Paroxetine",
-      "category": "选择性血清素转运体抑制剂（SSRI）",
+      "categories": [
+        "SSRI（选择性5-羟色胺再摄取抑制剂）"
+      ],
       "tags": [
         "强效抗焦虑",
         "抗胆碱能",
@@ -581,7 +631,7 @@
       "name_cn": "五氟利多",
       "name_en": "Penfluridol",
       "categories": [
-        "第一代抗精神病药（FGA）"
+        "FGA（典型抗精神病药）"
       ],
       "tags": [
         "超长效口服药",
@@ -597,7 +647,7 @@
       "name_cn": "奋乃静",
       "name_en": "Perphenazine",
       "categories": [
-        "第一代抗精神病药（FGA）"
+        "FGA（典型抗精神病药）"
       ],
       "tags": [
         "中等效价",
@@ -611,7 +661,9 @@
       "id": "pregabalin",
       "name_cn": "普瑞巴林",
       "name_en": "Pregabalin",
-      "category": "抗焦虑/镇痛药",
+      "categories": [
+        "慢性疼痛辅助药"
+      ],
       "tags": [
         "GAD",
         "神经痛",
@@ -622,7 +674,9 @@
       "id": "propranolol",
       "name_cn": "普萘洛尔",
       "name_en": "Propranolol",
-      "category": "抗焦虑药",
+      "categories": [
+        "β受体阻滞剂"
+      ],
       "tags": [
         "β受体阻滞剂",
         "缓解震颤",
@@ -633,7 +687,9 @@
       "id": "quetiapine",
       "name_cn": "喹硫平",
       "name_en": "Quetiapine",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "镇静",
         "低EPS",
@@ -644,7 +700,9 @@
       "id": "reboxetine",
       "name_cn": "瑞波西汀",
       "name_en": "Reboxetine",
-      "category": "去甲肾上腺素转运体抑制剂（NRI）",
+      "categories": [
+        "NRI（选择性去甲肾上腺素再摄取抑制剂）"
+      ],
       "tags": [
         "纯NRI",
         "激活",
@@ -655,7 +713,9 @@
       "id": "risperidone",
       "name_cn": "利培酮",
       "name_en": "Risperidone",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "经典SGA",
         "高泌乳素",
@@ -666,7 +726,9 @@
       "id": "sertindole",
       "name_cn": "舍吲哚",
       "name_en": "Sertindole",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "高D2/5HT2A",
         "低EPS",
@@ -677,7 +739,9 @@
       "id": "sertraline",
       "name_cn": "舍曲林",
       "name_en": "Sertraline",
-      "category": "选择性血清素转运体抑制剂（SSRI）",
+      "categories": [
+        "SSRI（选择性5-羟色胺再摄取抑制剂）"
+      ],
       "tags": [
         "DAT抑制",
         "心脏安全",
@@ -688,7 +752,9 @@
       "id": "sulpiride",
       "name_cn": "舒必利",
       "name_en": "Sulpiride",
-      "category": "第一代抗精神病药 (FGA)",
+      "categories": [
+        "FGA（典型抗精神病药）"
+      ],
       "tags": [
         "选择性D2",
         "高泌乳素",
@@ -700,8 +766,7 @@
       "name_cn": "坦度螺酮",
       "name_en": "Tandospirone",
       "categories": [
-        "非苯二氮䓬类抗焦虑药",
-        "5-HT1A受体部分激动剂"
+        "抗焦虑药（5-HT1A受体部分激动剂）"
       ],
       "tags": [
         "真正的无成瘾",
@@ -715,7 +780,9 @@
       "id": "tianeptine",
       "name_cn": "噻奈普汀",
       "name_en": "Tianeptine",
-      "category": "选择性血清素转运体抑制剂（SSRE）",
+      "categories": [
+        "SSRE（选择性5-羟色胺再摄取增强剂）"
+      ],
       "tags": [
         "独特机制",
         "应激保护",
@@ -727,8 +794,7 @@
       "name_cn": "硫必利",
       "name_en": "Tiapride",
       "categories": [
-        "第一代抗精神病药（FGA）",
-        "苯甲酰胺类"
+        "FGA（典型抗精神病药）"
       ],
       "tags": [
         "抽动症经典药",
@@ -743,7 +809,9 @@
       "id": "topiramate",
       "name_cn": "托吡酯",
       "name_en": "Topiramate",
-      "category": "情绪稳定剂辅助药物",
+      "categories": [
+        "抗癫痫药（心境辅助）"
+      ],
       "tags": [
         "减肥",
         "认知减退",
@@ -754,7 +822,9 @@
       "id": "trazodone",
       "name_cn": "曲唑酮",
       "name_en": "Trazodone",
-      "category": "5-HT2A拮抗剂/再摄取抑制剂（SARI）",
+      "categories": [
+        "SARI（5-HT2A拮抗/再摄取抑制剂）"
+      ],
       "tags": [
         "强效催眠",
         "性功能保护",
@@ -765,7 +835,9 @@
       "id": "valproate",
       "name_cn": "丙戊酸钠",
       "name_en": "Sodium Valproate",
-      "category": "情绪稳定剂",
+      "categories": [
+        "心境稳定剂"
+      ],
       "tags": [
         "广谱",
         "致畸",
@@ -776,7 +848,9 @@
       "id": "venlafaxine",
       "name_cn": "文拉法辛",
       "name_en": "Venlafaxine",
-      "category": "血清素-去甲肾上腺素转运体抑制剂（SNRI）",
+      "categories": [
+        "SNRI（5-羟色胺和去甲肾上腺素再摄取抑制剂）"
+      ],
       "tags": [
         "双重机制",
         "剂量依赖",
@@ -788,8 +862,7 @@
       "name_cn": "维拉佐酮",
       "name_en": "Vilazodone",
       "categories": [
-        "5-HT部分激动再摄取抑制剂（SPARI）",
-        "新型抗抑郁药"
+        "SPARI（5-HT1A部分激动/再摄取抑制剂）"
       ],
       "tags": [
         "必须随餐服用",
@@ -803,7 +876,9 @@
       "id": "vortioxetine",
       "name_cn": "伏硫西汀",
       "name_en": "Vortioxetine",
-      "category": "血清素调制剂（SMS）",
+      "categories": [
+        "SMS（5-羟色胺调制剂）"
+      ],
       "tags": [
         "多模式",
         "改善认知",
@@ -814,7 +889,9 @@
       "id": "ziprasidone",
       "name_cn": "齐拉西酮",
       "name_en": "Ziprasidone",
-      "category": "第二代抗精神病药（SGA）",
+      "categories": [
+        "SGA（非典型抗精神病药）"
+      ],
       "tags": [
         "餐后服用",
         "QTc延长",
@@ -825,7 +902,9 @@
       "id": "zolpidem",
       "name_cn": "唑吡坦",
       "name_en": "Zolpidem",
-      "category": "非苯二氮䓬类催眠药（Z-Drug）",
+      "categories": [
+        "Z-Drug（非苯二氮䓬类催眠药）"
+      ],
       "tags": [
         "入睡困难",
         "短效",
@@ -836,7 +915,9 @@
       "id": "zopiclone",
       "name_cn": "佐匹克隆",
       "name_en": "Zopiclone",
-      "category": "非苯二氮䓬类催眠药（Z-Drug）",
+      "categories": [
+        "Z-Drug（非苯二氮䓬类催眠药）"
+      ],
       "tags": [
         "广谱GABA-A",
         "入睡/维持",

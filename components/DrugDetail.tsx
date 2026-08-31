@@ -294,6 +294,7 @@ const DrugDetail: React.FC<DrugDetailProps> = ({ drugId, isDarkMode, onNavigate,
           title={drug.name_cn}
           isDarkMode={isDarkMode}
           editable={false}
+          onNavigate={onNavigate}
         />
     </div>
   );

@@ -3,8 +3,7 @@ id: "vilazodone"
 name_cn: "维拉佐酮"
 name_en: "Vilazodone"
 categories:
-  - "5-HT部分激动再摄取抑制剂（SPARI）"
-  - "新型抗抑郁药"
+  - "SPARI（5-HT1A部分激动/再摄取抑制剂）"
 tags:
   - "必须随餐服用"
   - "极低性功能影响"

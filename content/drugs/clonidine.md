@@ -3,8 +3,8 @@ id: "clonidine"
 name_cn: "可乐定"
 name_en: "Clonidine"
 categories:
-  - "α2肾上腺素受体激动剂"
-  - "抗高血压药"
+  - "α2受体激动剂"
+  - "ADHD 非兴奋剂"
 tags:
   - "α2受体激动"
   - "中枢镇静"

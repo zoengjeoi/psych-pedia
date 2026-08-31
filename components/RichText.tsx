@@ -1,8 +1,8 @@
-import React from 'react';
-import { PRINCIPLES } from '../constants';
+import React, { useMemo } from 'react';
 import { NavigateType } from '../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { usePrinciples, buildPrinciplePatterns } from '../usePrinciples';
 
 interface RichTextProps {
   content: string;
@@ -10,13 +10,9 @@ interface RichTextProps {
 }
 
 const RichText: React.FC<RichTextProps> = ({ content, onNavigate }) => {
-  // Create a regex pattern from all principle IDs and Titles to find matches
-  // Sorting by length desc to match longest terms first (e.g. "D2 Receptor" before "D2")
-  const patterns = PRINCIPLES.map(p => ({
-    id: p.id,
-    term: p.title.split(' ')[0], // Match "D2" from "D2 多巴胺受体"
-    fullTitle: p.title
-  })).sort((a, b) => b.term.length - a.term.length);
+  // 动态加载原理索引(受体+假说),构建自动跳转模式
+  const principles = usePrinciples();
+  const patterns = useMemo(() => buildPrinciplePatterns(principles), [principles]);
 
   const renderTextWithLinks = (text: string) => {
     let partsToProcess: (string | React.ReactNode)[] = [text];

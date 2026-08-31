@@ -2,6 +2,8 @@
 id: "lorazepam"
 name_cn: "劳拉西泮"
 name_en: "Lorazepam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "中效BZD"
   - "抗焦虑起效极快"
@@ -50,8 +52,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 劳拉西泮 (Lorazepam)

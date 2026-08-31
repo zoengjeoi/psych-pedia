@@ -2,6 +2,8 @@
 id: "blonanserin"
 name_cn: "布南色林"
 name_en: "Blonanserin"
+categories:
+  - "SGA（非典型抗精神病药）"
 tags:
   - "对阴性症状有效"
   - "D2/5HT2A高亲和"
@@ -49,8 +51,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "第二代抗精神病药（SGA）"
 ---
 
 # 布南色林 (Blonanserin)

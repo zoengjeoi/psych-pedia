@@ -2,6 +2,8 @@
 id: "alprazolam"
 name_cn: "阿普唑仑"
 name_en: "Alprazolam (Xanax)"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "中短效BZD"
   - "抗焦虑起效快"
@@ -49,8 +51,6 @@ market_info:
   price: "$"
   insurance: "甲类医保"
   pregnancy: "D类"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 阿普唑仑 (Alprazolam)

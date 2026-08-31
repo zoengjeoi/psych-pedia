@@ -2,7 +2,8 @@
 id: "methylphenidate"
 name_cn: "哌甲酯"
 name_en: "Methylphenidate"
-category: "ADHD 刺激类药物"
+categories:
+  - "ADHD 中枢兴奋剂"
 tags:
   - "多巴胺阻断"
   - "专注力"

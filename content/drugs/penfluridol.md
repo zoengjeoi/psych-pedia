@@ -3,7 +3,7 @@ id: "penfluridol"
 name_cn: "五氟利多"
 name_en: "Penfluridol"
 categories:
-  - "第一代抗精神病药（FGA）"
+  - "FGA（典型抗精神病药）"
 tags:
   - "超长效口服药"
   - "一周仅服一次"

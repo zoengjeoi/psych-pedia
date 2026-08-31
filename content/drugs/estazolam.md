@@ -2,6 +2,8 @@
 id: "estazolam"
 name_cn: "艾司唑仑 (舒乐安定)"
 name_en: "Estazolam"
+categories:
+  - "BZD（苯二氮䓬类）"
 tags:
   - "中效BZD"
   - "经典安眠药"
@@ -50,8 +52,6 @@ market_info:
   price: "$"
   insurance: "医保目录"
   pregnancy: "待查"
-categories:
-  - "苯二氮䓬类 (BZD)"
 ---
 
 # 艾司唑仑 (Estazolam)

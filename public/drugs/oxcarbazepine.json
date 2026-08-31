@@ -2,7 +2,9 @@
   "id": "oxcarbazepine",
   "name_cn": "奥卡西平",
   "name_en": "Oxcarbazepine",
-  "category": "情绪稳定剂",
+  "categories": [
+    "心境稳定剂"
+  ],
   "tags": [
     "钠通道阻滞",
     "低钠血症",

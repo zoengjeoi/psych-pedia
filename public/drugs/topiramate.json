@@ -2,7 +2,9 @@
   "id": "topiramate",
   "name_cn": "托吡酯",
   "name_en": "Topiramate",
-  "category": "情绪稳定剂辅助药物",
+  "categories": [
+    "抗癫痫药（心境辅助）"
+  ],
   "tags": [
     "减肥",
     "认知减退",

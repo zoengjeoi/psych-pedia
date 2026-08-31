@@ -2,7 +2,8 @@
 id: "ziprasidone"
 name_cn: "齐拉西酮"
 name_en: "Ziprasidone"
-category: "第二代抗精神病药（SGA）"
+categories:
+  - "SGA（非典型抗精神病药）"
 tags:
   - "餐后服用"
   - "QTc延长"
