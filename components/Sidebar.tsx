@@ -128,7 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
         className={`
           fixed md:relative z-40 h-screen
           bg-white dark:bg-medical-panel
-          border-r border-slate-200 dark:border-slate-800
+          border-r border-slate-200 dark:border-medical-line
           transition-[width,transform] duration-200 ease-out
           flex flex-col overflow-hidden
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -141,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
           <div className="hidden md:flex flex-col items-center py-4">
             <button
               onClick={() => setIsCollapsed(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-cyan-500 transition-all group"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-medical-surfaceAlt text-slate-400 hover:text-cyan-500 transition-all group"
               title="Expand Sidebar"
             >
               <svg className="w-5 h-5 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,17 +157,17 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
             isCollapsed ? 'md:opacity-0 md:pointer-events-none md:hidden' : 'opacity-100'
           }`}
         >
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-200 dark:border-medical-line flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                <span className="text-cyan-500">Psych</span>Pedia
+              <h1 className="font-serif text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+                <span className="text-gradient">PsychPedia</span>
               </h1>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">v2.0 Beta</p>
             </div>
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => setIsCollapsed(true)}
-                className="hidden md:flex p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors group"
+                className="hidden md:flex p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-medical-surfaceAlt text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors group"
                 title="Collapse Sidebar"
               >
                 <svg className="w-4 h-4 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,14 +180,14 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
             </div>
           </div>
 
-          <div className="p-4 sticky top-0 bg-white dark:bg-medical-panel z-10 border-b border-slate-200 dark:border-slate-800">
+          <div className="p-4 sticky top-0 bg-white dark:bg-medical-panel z-10 border-b border-slate-200 dark:border-medical-line">
             <div className="relative">
               <input
                 type="text"
                 placeholder="搜索..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 text-sm rounded-lg px-4 py-2 pl-9 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full bg-slate-100 dark:bg-medical-panel text-slate-900 dark:text-slate-100 text-sm rounded-lg px-4 py-2 pl-9 border border-slate-200 dark:border-medical-line focus:outline-none focus:ring-2 focus:ring-medical-primary"
               />
               <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
@@ -211,8 +211,8 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
                         onClick={() => handleItemClick('principle', p.id)}
                         className={`w-full text-left px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-3 ${
                           currentView.id === p.id && currentView.type === 'principle'
-                            ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                            ? 'bg-gradient-to-r from-violet-500/15 via-violet-500/5 to-transparent text-violet-700 dark:text-violet-300 shadow-[inset_3px_0_0_0_rgba(139,92,246,0.85)]'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-medical-surfaceAlt hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                         title={p.title}
                       >
@@ -244,13 +244,13 @@ const Sidebar: React.FC<SidebarProps> = ({ drugs, principles, currentView, onNav
                         onClick={() => handleItemClick('drug', d.id)}
                         className={`w-full text-left px-3 py-2 rounded-md transition-all duration-200 flex items-center gap-3 ${
                           currentView.id === d.id && currentView.type === 'drug'
-                            ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+                            ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent text-cyan-700 dark:text-cyan-300 shadow-[inset_3px_0_0_0_rgba(14,165,233,0.9)]'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-medical-surfaceAlt hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                         title={d.name_cn}
                       >
                         <span className="w-5 h-5 flex items-center justify-center shrink-0">
-                          <div className={`w-2 h-2 rounded-full ${currentView.id === d.id ? 'bg-cyan-500' : 'bg-slate-400'}`}></div>
+                          <div className={`w-2 h-2 rounded-full transition-all ${currentView.id === d.id ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]' : 'bg-slate-400'}`}></div>
                         </span>
                         <div className="flex flex-col truncate">
                           <span className="text-sm font-medium">{d.name_cn}</span>

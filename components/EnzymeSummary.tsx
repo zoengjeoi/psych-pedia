@@ -75,20 +75,21 @@ const EnzymeSummary: React.FC<EnzymeSummaryProps> = ({
       {onBack && backLabel && (
         <button
           onClick={onBack}
-          className="group mb-6 flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors bg-white dark:bg-medical-panel border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow"
+          className="group mb-6 flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors bg-white dark:bg-medical-panel border border-slate-200 dark:border-medical-line rounded-lg shadow-sm hover:shadow"
         >
           <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           <span>返回 {backLabel}</span>
         </button>
       )}
 
-      <div className="bg-white dark:bg-medical-surface rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-medical-panel p-8 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-cyan-100 text-cyan-800">肝酶</span>
+      <div className="bg-white dark:bg-medical-surface rounded-2xl card-depth border border-slate-200 dark:border-medical-line overflow-hidden">
+        <div className="relative overflow-hidden bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-medical-panel p-8 border-b border-slate-200 dark:border-medical-line">
+          <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-cyan-500/10 dark:bg-teal-400/10 blur-3xl animate-glow-pulse"></div>
+          <div className="relative flex items-center gap-3 mb-2">
+            <span className="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300">肝酶</span>
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">{normalizedEnzyme}</h1>
-          <p className="text-slate-600 dark:text-slate-300">共 {matchedDrugs.length} 种药物涉及该代谢途径</p>
+          <h1 className="relative font-serif text-4xl font-bold text-slate-900 dark:text-white mb-2">{normalizedEnzyme}</h1>
+          <p className="relative text-slate-600 dark:text-slate-300">共 {matchedDrugs.length} 种药物涉及该代谢途径</p>
         </div>
 
         <div className="p-8">
@@ -102,7 +103,7 @@ const EnzymeSummary: React.FC<EnzymeSummaryProps> = ({
                 <button
                   key={drug.id}
                   onClick={() => onNavigate('drug', drug.id)}
-                  className="text-left group rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-medical-panel/60 p-4 hover:shadow-md hover:border-cyan-400 transition"
+                  className="text-left group rounded-xl border border-slate-200 dark:border-medical-line bg-slate-50 dark:bg-medical-panel/60 p-4 hover:shadow-md hover:shadow-cyan-500/10 hover:border-cyan-400 hover:-translate-y-0.5 transition-all"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>

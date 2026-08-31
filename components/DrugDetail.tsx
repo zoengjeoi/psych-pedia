@@ -166,7 +166,7 @@ const DrugDetail: React.FC<DrugDetailProps> = ({ drugId, isDarkMode, onNavigate,
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
             <div>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1">
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
                     {drug.name_cn}
                 </h2>
                 <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ const DrugDetail: React.FC<DrugDetailProps> = ({ drugId, isDarkMode, onNavigate,
                    <button
                      type="button"
                      onClick={handleHalfLifeToggle}
-                     className="text-2xl font-black text-cyan-600 dark:text-cyan-400 font-mono hover:underline hover:text-cyan-500 transition"
+                     className="text-2xl font-black text-slate-800 dark:text-white font-mono hover:underline hover:text-slate-600 dark:hover:text-slate-300 transition"
                      title="点击切换剂型"
                    >
                      {halfLifeValue}
@@ -229,7 +229,7 @@ const DrugDetail: React.FC<DrugDetailProps> = ({ drugId, isDarkMode, onNavigate,
         {/* Main Grid */}
         <div className={hasRadar ? 'grid grid-cols-1 lg:grid-cols-2 gap-8' : 'space-y-4'}>
           {hasRadar && (
-            <div className="bg-white dark:bg-medical-surface rounded-xl p-2 sm:p-3 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col">
+            <div className="bg-white dark:bg-medical-surface rounded-xl p-2 sm:p-3 card-depth border border-slate-200 dark:border-medical-line flex flex-col">
               <div className="mb-1 flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-1">
                 <h3 className="font-bold text-sm sm:text-base text-slate-800 dark:text-cyan-400 flex items-center gap-2">
                     <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -254,7 +254,7 @@ const DrugDetail: React.FC<DrugDetailProps> = ({ drugId, isDarkMode, onNavigate,
             </div>
                 
             {drug.pearls?.map((pearl, idx) => (
-              <div key={idx} className={`p-4 rounded-lg border-l-4 shadow-sm ${getPearlColor(pearl.type)} hover:shadow-md transition-shadow`}>
+              <div key={idx} className={`p-4 rounded-lg border-l-4 shadow-sm ${getPearlColor(pearl.type)} hover:shadow-md hover:-translate-y-0.5 transition-all`}>
                 <div className="flex items-start gap-3">
                   <div className="mt-1 flex-shrink-0">
                     {getPearlIcon(pearl.type)}

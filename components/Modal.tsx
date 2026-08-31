@@ -22,12 +22,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, data }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
       <div 
-        className="bg-white dark:bg-medical-surface w-full max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all scale-100"
+        className="bg-white dark:bg-medical-surface w-full max-w-md rounded-xl shadow-2xl border border-slate-200 dark:border-medical-line overflow-hidden transform transition-all scale-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-cyan-400 font-mono tracking-tight">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-cyan-300 font-mono tracking-tight">
               {data.name}
             </h3>
             <button 
@@ -57,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, data }) => {
           </div>
         </div>
         
-        <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-3 border-t border-slate-100 dark:border-slate-800 text-right">
+        <div className="bg-slate-50 dark:bg-slate-900/50 px-6 py-3 border-t border-slate-100 dark:border-medical-line text-right">
           <button 
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"

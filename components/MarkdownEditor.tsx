@@ -34,9 +34,9 @@ const Heading = ({ level, children, ...props }: any) => {
   
   const getClassName = (l: number) => {
     switch(l) {
-      case 1: return `text-xl sm:text-3xl font-bold mt-6 mb-4 pb-2 border-b-2 border-slate-200 dark:border-slate-700 ${baseClass}`;
-      case 2: return `text-2xl font-bold mt-5 mb-3 pb-1 border-b border-slate-200 dark:border-slate-700 ${baseClass}`;
-      case 3: return `text-xl font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200 scroll-mt-20`;
+      case 1: return `font-serif text-xl sm:text-3xl font-bold mt-6 mb-4 pb-2 border-b-2 border-slate-200 dark:border-medical-line ${baseClass}`;
+      case 2: return `font-serif text-2xl font-bold mt-5 mb-3 pb-1 border-b border-slate-200 dark:border-medical-line ${baseClass}`;
+      case 3: return `font-serif text-xl font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200 scroll-mt-20`;
       case 4: return `text-lg font-semibold mt-3 mb-2 text-slate-800 dark:text-slate-200 scroll-mt-20`;
       default: return `font-semibold mt-2 mb-2 text-slate-800 dark:text-slate-200 scroll-mt-20`;
     }
@@ -62,7 +62,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             onClick={() => setIsPreview(false)}
             className={`px-4 py-2 rounded-t transition-colors ${
               !isPreview
-                ? 'bg-blue-500 text-white'
+                ? 'bg-gradient-to-r from-medical-primary to-medical-primaryDeep text-white shadow-md'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -75,7 +75,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             onClick={() => setIsPreview(true)}
             className={`px-4 py-2 rounded-t transition-colors ${
               isPreview
-                ? 'bg-blue-500 text-white'
+                ? 'bg-gradient-to-r from-medical-primary to-medical-primaryDeep text-white shadow-md'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
@@ -99,7 +99,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full h-96 p-4 font-mono text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+          className="w-full h-96 p-4 font-mono text-sm border border-slate-300 dark:border-medical-line rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-medical-primary focus:border-transparent resize-vertical"
           placeholder="在此输入 Markdown 格式的内容...
 
 支持的格式：
@@ -143,7 +143,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 <li className="ml-4" {...props} />
               ),
               blockquote: ({ node, ...props }) => (
-                <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-3 bg-blue-50 dark:bg-blue-900/20 text-slate-700 dark:text-slate-300 italic" {...props} />
+                <blockquote className="border-l-4 border-medical-primary pl-4 py-2 my-3 bg-cyan-50 dark:bg-cyan-500/10 text-slate-700 dark:text-slate-300 italic" {...props} />
               ),
               code: ({ node, inline, ...props }: any) =>
                 inline ? (
@@ -155,15 +155,15 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg overflow-x-auto mb-3" {...props} />
               ),
               a: ({ node, ...props }) => (
-                <a className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+                <a className="text-medical-primary dark:text-medical-primaryBright hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
               ),
               table: ({ node, ...props }) => (
                 <div className="overflow-x-auto mb-4 -mx-2 px-2">
-                  <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm" {...props} />
+                  <table className="min-w-full divide-y divide-slate-200 dark:divide-medical-line border border-slate-200 dark:border-medical-line text-xs sm:text-sm" {...props} />
                 </div>
               ),
               thead: ({ node, ...props }) => (
-                <thead className="bg-slate-100 dark:bg-slate-800" {...props} />
+                <thead className="bg-slate-100 dark:bg-medical-surfaceAlt" {...props} />
               ),
               tbody: ({ node, ...props }) => (
                 <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700" {...props} />

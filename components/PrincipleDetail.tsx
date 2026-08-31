@@ -86,7 +86,7 @@ const PrincipleDetail: React.FC<PrincipleDetailProps> = ({
       {onBack && backLabel && (
         <button 
           onClick={onBack}
-          className="group mb-6 flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors bg-white dark:bg-medical-panel border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow"
+          className="group mb-6 flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors bg-white dark:bg-medical-panel border border-slate-200 dark:border-medical-line rounded-lg shadow-sm hover:shadow"
         >
           <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           <span>返回 {backLabel}</span>
@@ -97,11 +97,11 @@ const PrincipleDetail: React.FC<PrincipleDetailProps> = ({
         {/* Header */}
         <div className="mb-6">
            <div className="flex items-center gap-3 mb-2">
-             <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${isReceptorLike(principle.type) ? 'bg-cyan-100 text-cyan-800' : 'bg-purple-100 text-purple-800'}`}>
+             <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${isReceptorLike(principle.type) ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-300' : 'bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300'}`}>
                {isReceptorLike(principle.type) ? '基础受体' : '生物学假说'}
              </span>
            </div>
-           <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">{principle.title}</h1>
+           <h1 className="font-serif text-4xl font-bold text-slate-900 dark:text-white mb-2">{principle.title}</h1>
            {principle.subtitle && (
              <h2 className="text-xl font-mono text-slate-500 dark:text-slate-400">{principle.subtitle}</h2>
            )}

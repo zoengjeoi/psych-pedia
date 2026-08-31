@@ -197,7 +197,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen font-sans bg-slate-50 dark:bg-medical-dark transition-colors duration-300">
+    <div className="flex min-h-screen font-sans text-slate-900 dark:text-medical-text transition-colors duration-300">
       
       {/* Sidebar */}
       <Sidebar 
@@ -218,7 +218,7 @@ const App: React.FC = () => {
       >
         
         {/* Top Navbar (Hamburger + Theme Toggle) */}
-        <header className="sticky top-0 z-20 bg-white/80 dark:bg-medical-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center h-16 shrink-0">
+        <header className="sticky top-0 z-20 bg-white/80 dark:bg-medical-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-medical-line px-6 py-4 flex justify-between items-center h-16 shrink-0">
            <div className="flex items-center gap-4">
              <button 
                onClick={() => setIsSidebarOpen(true)}
@@ -231,7 +231,7 @@ const App: React.FC = () => {
 
            <button 
              onClick={() => setIsDarkMode(!isDarkMode)}
-             className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+             className="p-2 rounded-full bg-slate-100 dark:bg-medical-surface text-slate-600 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-medical-surfaceAlt transition-colors"
              title="切换主题 (Toggle Theme)"
            >
              {isDarkMode ? (

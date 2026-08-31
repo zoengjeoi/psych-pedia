@@ -1,0 +1,130 @@
+/* ============================================================
+   Psych-Pedia 设计系统 CSS
+   干净纯色背景 · 动效 · 工具类
+   ============================================================ */
+
+/* ---------- 字体渲染基底 ---------- */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', 'Noto Serif SC', system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- 环境背景:干净的纯色 ---------- */
+/* 背景由 body 上的 Tailwind 类提供:浅色 slate-50 / 深色 medical-dark,
+   不使用渐变 / 光晕 / 网格,保持干净。 */
+
+/* ---------- 工具类 ---------- */
+/* 天青 → 紫罗兰 渐变文字(品牌 / 欢迎页主标题) */
+.text-gradient {
+  background-image: linear-gradient(120deg, #38bdf8 0%, #0ea5e9 42%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+html:not(.dark) .text-gradient {
+  background-image: linear-gradient(120deg, #0284c7 0%, #0ea5e9 45%, #7c3aed 100%);
+}
+
+/* 卡片 3D 浮起:分层阴影 + 顶部高光细线 */
+.card-depth {
+  box-shadow:
+    0 1px 2px rgba(2, 6, 23, 0.35),
+    0 10px 30px -14px rgba(2, 6, 23, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html:not(.dark) .card-depth {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 28px -18px rgba(15, 23, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 激活态天青光晕 */
+.glow-ring {
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.28), 0 0 18px -4px rgba(14, 165, 233, 0.45);
+}
+
+/* 滚动条(海军蓝) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #a9b7cc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8fa1bb;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2a3a5e;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3a4f7a;
+}
+
+/* 侧栏自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+}
+html.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.5);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.65);
+}
+
+/* ---------- Markdown 兜底(防呆) ---------- */
+.prose h1, .prose h2, .prose h3 {
+  font-family: 'Fraunces', 'Noto Serif SC', Georgia, serif;
+  letter-spacing: -0.015em;
+}
+.prose blockquote {
+  border-color: #0ea5e9;
+}
+html.dark .prose blockquote {
+  border-color: #38bdf8;
+}
+.prose a {
+  color: #0284c7;
+}
+html.dark .prose a {
+  color: #56c1ff;
+}
+
+/* ---------- 动效:Keyframes 安全兜底 ---------- */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ---------- 无障碍:减弱动态效果 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-float,
+  .animate-glow-pulse {
+    animation: none !important;
+  }
+}

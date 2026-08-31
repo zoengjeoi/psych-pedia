@@ -184,7 +184,7 @@ const TableOfContents: React.FC<TocProps> = ({ content }) => {
                       onClick={(e) => handleClick(e, item.id)}
                       title={item.text}
                    >
-                      <div className={`rounded-full transition-all duration-300 ${isActive ? 'bg-cyan-500 w-2 h-2 shadow-[0_0_8px_rgba(6,182,212,0.8)]' : 'bg-slate-300 dark:bg-slate-600 w-1.5 h-1.5 hover:scale-150 hover:bg-cyan-400'}`} />
+                      <div className={`rounded-full transition-all duration-300 ${isActive ? 'bg-cyan-400 w-2 h-2 shadow-[0_0_10px_rgba(34,211,238,0.9)]' : 'bg-slate-300 dark:bg-slate-600 w-1.5 h-1.5 hover:scale-150 hover:bg-cyan-400'}`} />
                    </div>
                 );
             }
@@ -192,7 +192,7 @@ const TableOfContents: React.FC<TocProps> = ({ content }) => {
             return (
                <div 
                   key={index}
-                  className={`flex items-center cursor-pointer group transition-colors duration-150 py-1 px-2 rounded-lg ${isActive ? 'bg-cyan-50 dark:bg-cyan-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
+                  className={`flex items-center cursor-pointer group transition-colors duration-150 py-1 px-2 rounded-lg ${isActive ? 'bg-cyan-50 dark:bg-cyan-500/15' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
                   onClick={(e) => handleClick(e, item.id)}
                >
                   <div className="flex-shrink-0 flex justify-center mr-2 w-3" style={{ marginLeft: `${indentLevel * 12}px` }}>
@@ -239,7 +239,7 @@ const TableOfContents: React.FC<TocProps> = ({ content }) => {
                      return (
                         <div 
                            key={index}
-                           className={`flex items-center cursor-pointer py-1.5 px-2 rounded-lg transition-colors ${isActive ? 'bg-cyan-50 dark:bg-cyan-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
+                           className={`flex items-center cursor-pointer py-1.5 px-2 rounded-lg transition-colors ${isActive ? 'bg-cyan-50 dark:bg-cyan-500/15' : 'hover:bg-slate-50 dark:hover:bg-slate-800/80'}`}
                            style={{ paddingLeft: `${mobileIndent + 8}px` }}
                            onClick={(e) => handleClick(e, item.id, true)}
                         >

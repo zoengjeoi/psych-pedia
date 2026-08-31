@@ -40,17 +40,17 @@ const WikiContent: React.FC<WikiContentProps> = ({
   }
 
   return (
-    <div className="wiki-content-section bg-white dark:bg-medical-surface rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+    <div className="wiki-content-section bg-white dark:bg-medical-surface rounded-xl p-6 card-depth border border-slate-200 dark:border-medical-line">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-medical-line">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
-          <h3 className="font-bold text-lg text-slate-800 dark:text-cyan-400">
+          <h3 className="font-serif font-bold text-lg text-slate-800 dark:text-cyan-300">
             百科详细内容
           </h3>
-          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-medical-surfaceAlt px-2 py-1 rounded">
             Encyclopedia
           </span>
         </div>
@@ -73,7 +73,7 @@ const WikiContent: React.FC<WikiContentProps> = ({
           {editable && !isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-3 py-1 rounded text-sm bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-1"
+              className="px-3 py-1 rounded text-sm bg-medical-primary text-white hover:bg-medical-primaryDeep transition-colors flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -142,7 +142,7 @@ const WikiContent: React.FC<WikiContentProps> = ({
           {editable && !content && (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 rounded bg-medical-primary text-white hover:bg-medical-primaryDeep transition-colors"
             >
               添加百科内容
             </button>
@@ -152,8 +152,8 @@ const WikiContent: React.FC<WikiContentProps> = ({
 
       {/* Tips */}
       {isEditing && (
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex items-start gap-2 text-sm text-blue-800 dark:text-blue-300">
+        <div className="mt-4 p-3 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+          <div className="flex items-start gap-2 text-sm text-cyan-800 dark:text-cyan-300">
             <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

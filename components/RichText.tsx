@@ -75,7 +75,7 @@ const RichText: React.FC<RichTextProps> = ({ content, onNavigate }) => {
     ul: ({ children }) => <ul className="list-disc list-inside space-y-1 my-2 pl-4">{children}</ul>,
     li: ({ children }) => <li className="text-slate-700 dark:text-slate-300">{children}</li>,
     a: ({ node, ...props }) => (
-      <a {...props} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" />
+      <a {...props} className="text-medical-primary dark:text-medical-primaryBright hover:underline" target="_blank" rel="noopener noreferrer" />
     ),
   };
 
