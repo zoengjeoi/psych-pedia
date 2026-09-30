@@ -213,6 +213,18 @@
       ]
     },
     {
+      "id": "daridorexant",
+      "name_cn": "达利雷生 (科唯可)",
+      "name_en": "Daridorexant (Quviviq)",
+      "category": "双食欲素受体拮抗剂（DORA）",
+      "tags": [
+        "DORA",
+        "入睡+维持困难",
+        "改善日间功能",
+        "半衰期约8h"
+      ]
+    },
+    {
       "id": "desvenlafaxine",
       "name_cn": "去甲文拉法辛",
       "name_en": "Desvenlafaxine",
@@ -312,6 +324,18 @@
         "早醒",
         "金属味",
         "长期使用"
+      ]
+    },
+    {
+      "id": "fazamorexant",
+      "name_cn": "法赞雷生",
+      "name_en": "Fazamorexant (YZJ-1139)",
+      "category": "双食欲素受体拮抗剂（DORA）",
+      "tags": [
+        "国产首个DORA 1类新药",
+        "DORA",
+        "速效短半衰期",
+        "入睡困难为主"
       ]
     },
     {
@@ -426,6 +450,18 @@
         "双相抑郁",
         "慢滴定",
         "认知保护"
+      ]
+    },
+    {
+      "id": "lemborexant",
+      "name_cn": "莱博雷生 (达卫可)",
+      "name_en": "Lemborexant (Dayvigo)",
+      "category": "双食欲素受体拮抗剂（DORA）",
+      "tags": [
+        "DORA",
+        "入睡+维持困难",
+        "有效半衰期17-19h",
+        "夜间后半夜覆盖强"
       ]
     },
     {

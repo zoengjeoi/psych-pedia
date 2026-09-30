@@ -24,6 +24,7 @@ export const DRUG_CATEGORY_ORDER: string[] = [
   // 抗焦虑与镇静催眠
   'BZD（苯二氮䓬类）',
   'Z-Drug（非苯二氮䓬类催眠药）',
+  '双食欲素受体拮抗剂（DORA）',
   '抗焦虑药（5-HT1A受体部分激动剂）',
   'β受体阻滞剂',
   'α2受体激动剂',
