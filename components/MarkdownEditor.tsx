@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { NavigateType } from '../types';
 import { usePrinciples, buildPrinciplePatterns, linkMarkdownPrinciples } from '../usePrinciples';
+import { fixCjkPunctuationEmphasis, remarkStripZeroWidth } from '../cjkMarkdown';
 
 interface MarkdownEditorProps {
   content: string;
@@ -57,11 +58,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 }) => {
   const [isPreview, setIsPreview] = useState(true);
 
-  // 原理词条自动跳转:仅对预览渲染的 markdown 做预处理,编辑态 textarea 保持原文
+  // 原理词条自动跳转:仅对预览渲染的 markdown 做预处理,编辑态 textarea 保持原文。
+  // 之后再套一层 CJK 强调修正,让 **加粗紧邻全角标点(如 反事实（counterfactual）) 也能正常渲染。
   const principles = usePrinciples();
   const patterns = useMemo(() => buildPrinciplePatterns(principles), [principles]);
   const processedContent = useMemo(
-    () => (isPreview ? linkMarkdownPrinciples(content, patterns) : content),
+    () => (isPreview ? fixCjkPunctuationEmphasis(linkMarkdownPrinciples(content, patterns)) : content),
     [content, patterns, isPreview]
   );
 
@@ -133,7 +135,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       ) : (
         <div className="prose prose-slate dark:prose-invert max-w-none">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkStripZeroWidth]}
             rehypePlugins={[rehypeRaw, rehypeSanitize]}
             components={{
               h1: (props) => <Heading level={1} {...props} />,

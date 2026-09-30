@@ -3,6 +3,7 @@ import { NavigateType } from '../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { usePrinciples, buildPrinciplePatterns } from '../usePrinciples';
+import { fixCjkPunctuationEmphasis, remarkStripZeroWidth } from '../cjkMarkdown';
 
 interface RichTextProps {
   content: string;
@@ -13,6 +14,9 @@ const RichText: React.FC<RichTextProps> = ({ content, onNavigate }) => {
   // 动态加载原理索引(受体+假说),构建自动跳转模式
   const principles = usePrinciples();
   const patterns = useMemo(() => buildPrinciplePatterns(principles), [principles]);
+
+  // 简介同样需要 CJK 强调修正,例如 **D2（多巴胺 D2 受体）** 紧邻全角括号时应能正确加粗
+  const fixedContent = useMemo(() => fixCjkPunctuationEmphasis(content), [content]);
 
   const renderTextWithLinks = (text: string) => {
     let partsToProcess: (string | React.ReactNode)[] = [text];
@@ -76,8 +80,8 @@ const RichText: React.FC<RichTextProps> = ({ content, onNavigate }) => {
   };
 
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-      {content}
+    <ReactMarkdown remarkPlugins={[remarkGfm, remarkStripZeroWidth]} components={components}>
+      {fixedContent}
     </ReactMarkdown>
   );
 };
