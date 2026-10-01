@@ -25,3 +25,20 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# —— 本地调试工具与敏感文件（不入库） ——
+tools/
+.env
+.env.*
+!.env.example
+dev.log
+.zcode/
+.zcodeignore
+.claude/
+.sisyphus/
+
+# —— v2 (Astro) 扁平化后并入的规则 ——
+.astro/
+.backups/
+.DS_Store
+backup/

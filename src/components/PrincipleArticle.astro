@@ -1,0 +1,105 @@
+---
+/**
+ * 原理词条（受体 / 转运体 / 离子通道 / 假说）正文，服务端渲染。
+ */
+import type { CollectionEntry } from 'astro:content';
+import { isReceptorLike, type TocItem } from '../lib/types';
+import { extractImages } from '../lib/markdown';
+
+interface Props {
+  entry: CollectionEntry<'principles'>;
+  wiki: { html: string; toc: TocItem[] };
+  introHtml: string;
+}
+
+const { entry, wiki, introHtml } = Astro.props;
+const principle = entry.data;
+const receptorLike = isReceptorLike(principle.type);
+const images = extractImages(entry.body ?? '');
+---
+
+<div class="entry-shell mx-auto w-full px-4 py-8 md:px-8 md:py-10">
+  <button
+    type="button"
+    data-back
+    class="hidden mb-5 inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-slate-900 dark:text-slate-500 dark:hover:text-white"
+  >
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    </svg>
+    返回
+  </button>
+
+  <!-- 词条头 -->
+  <header class="border-b border-slate-200 pb-6 dark:border-medical-line">
+    <p
+      class={`mb-3 inline-block rounded px-2 py-0.5 text-xs font-bold tracking-wider ${
+        receptorLike
+          ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-300'
+          : 'bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300'
+      }`}
+    >
+      {receptorLike ? '受体 / 转运体 / 离子通道' : '生物学假说'}
+    </p>
+    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+      <h1 class="font-serif text-4xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-slate-200">
+        {principle.title}
+      </h1>
+      {principle.subtitle && (
+        <p class="text-xl text-slate-400 sm:text-2xl dark:text-slate-500">{principle.subtitle}</p>
+      )}
+    </div>
+  </header>
+
+  <!-- 简介：全站唯一放大的正文段落 -->
+  {
+    introHtml && (
+      <section class="py-8" aria-label="简介">
+        <div
+          class="max-w-3xl text-lg leading-relaxed text-slate-700 [&_p]:mb-3 dark:text-slate-300"
+          set:html={introHtml}
+        />
+      </section>
+    )
+  }
+
+  <!-- 图像资料 -->
+  {
+    images.length > 0 && (
+      <section class="border-t border-slate-200 py-8 dark:border-medical-line" aria-label="图像资料">
+        <h2 class="font-serif text-lg font-bold text-slate-800 dark:text-slate-200">图像资料</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {images.map((img) => (
+            <figure class="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-medical-line dark:bg-slate-800/50">
+              <img
+                src={img.url}
+                alt={img.alt}
+                loading="lazy"
+                decoding="async"
+                style={img.width ? `width:${img.width}px${img.height ? `;height:${img.height}px` : ''}` : undefined}
+                class="h-auto max-h-96 w-full object-contain"
+              />
+              {img.alt && (
+                <figcaption class="border-t border-slate-200 p-2 text-xs text-slate-500 dark:border-medical-line dark:text-slate-400">
+                  {img.alt}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 百科正文卡片（与上方版面同宽对齐；目录入口在顶栏右侧） -->
+  {
+    wiki.html && (
+      <section class="mt-4" aria-label="百科正文">
+        <div
+          class="wiki rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:px-8 dark:border-medical-line dark:bg-medical-surface"
+          set:html={wiki.html}
+        />
+      </section>
+    )
+  }
+</div>

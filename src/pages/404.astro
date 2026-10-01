@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="页面未找到 — PsychPedia" description="请求的词条或页面不存在。">
+  <div class="mx-auto max-w-2xl px-4 py-24 text-center md:px-6">
+    <p class="font-mono text-sm font-bold text-medical-primary">404</p>
+    <h1 class="mt-2 font-serif text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+      没有这个词条
+    </h1>
+    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+      URL 可能输错了，也可能词条还在编写中。从首页的分类索引找一找吧。
+    </p>
+    <a
+      href="/"
+      class="mt-8 inline-block rounded-lg bg-medical-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-medical-primary-deep"
+    >
+      回到首页
+    </a>
+  </div>
+</Base>

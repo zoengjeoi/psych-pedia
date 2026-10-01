@@ -1,8 +1,11 @@
+# v2 独立部署配置：
+# 上线时在 Netlify 站点设置中将 Base directory 指向 v2 即可读取本文件。
 [build]
 command = "npm run build"
 publish = "dist"
 
+# 首页规范路径为 /，/index 301 到 /
 [[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
+from = "/index"
+to = "/"
+status = 301

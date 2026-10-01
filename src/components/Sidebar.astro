@@ -1,0 +1,88 @@
+---
+import SidebarNav from './islands/SidebarNav';
+import { buildEntryIndex, getDrugs, getPrinciples } from '../lib/entries';
+
+const drugs = await getDrugs();
+const principles = await getPrinciples();
+const entries = buildEntryIndex(drugs, principles);
+// 构建时目录格式路由会带尾斜杠，规范化以匹配链接（/bupropion）
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+---
+
+<!-- 移动端抽屉遮罩：常驻 DOM + opacity 淡入淡出（无 backdrop-blur，避免手机端卡顿） -->
+<div
+  data-sidebar-overlay
+  class="sidebar-overlay fixed inset-0 z-30 bg-black/50 lg:hidden"
+  aria-hidden="true"
+>
+</div>
+
+<aside
+  transition:persist="sidebar"
+  data-sidebar-panel
+  class="sidebar-panel fixed inset-y-0 left-0 z-40 flex h-screen w-72 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:translate-x-0 dark:border-medical-line dark:bg-medical-panel"
+>
+  <!-- 折叠态窄条（仅桌面端显示） -->
+  <div class="sidebar-rail hidden w-full flex-col items-center gap-6 py-5 lg:flex">
+    <button
+      type="button"
+      data-sidebar-collapse
+      class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-cyan-500 dark:hover:bg-medical-surface-alt"
+      title="展开侧栏"
+      aria-label="展开侧栏"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+      </svg>
+    </button>
+    <a
+      href="/"
+      class="font-serif text-2xl font-bold text-slate-900 select-none dark:text-white"
+      title="PsychPedia 首页"
+    >
+      Ψ
+    </a>
+  </div>
+
+  <!-- 完整侧栏内容 -->
+  <div class="sidebar-full flex min-h-0 flex-1 flex-col">
+    <div class="flex items-start justify-between border-b border-slate-200 p-4 dark:border-medical-line">
+      <div>
+        <a
+          href="/"
+          class="brand-gradient font-serif text-2xl font-bold tracking-tight select-none"
+        >
+          PsychPedia
+        </a>
+        <p class="mt-0.5 text-[10px] tracking-widest text-slate-400 uppercase dark:text-slate-500">
+          精神药理学速查
+        </p>
+      </div>
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          data-sidebar-collapse
+          class="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 lg:inline-flex dark:hover:bg-medical-surface-alt dark:hover:text-slate-300"
+          title="收起侧栏"
+          aria-label="收起侧栏"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m9 14l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button
+          type="button"
+          data-sidebar-close
+          class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 lg:hidden dark:hover:bg-medical-surface-alt"
+          aria-label="关闭导航"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <SidebarNav client:load entries={entries} currentPath={currentPath} />
+  </div>
+</aside>

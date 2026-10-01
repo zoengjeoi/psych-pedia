@@ -1,0 +1,54 @@
+---
+import Base from '../../layouts/Base.astro';
+import { buildEnzymeMap } from '../../lib/entries';
+
+const groups = await buildEnzymeMap();
+
+// 按酶家族归类（CYP2D6 -> CYP）
+const byFamily = new Map<string, typeof groups>();
+for (const g of groups) {
+  const family = g.enzyme.replace(/\d+.*$/, '') || '其他';
+  const list = byFamily.get(family) ?? [];
+  list.push(g);
+  byFamily.set(family, list);
+}
+const families = Array.from(byFamily.entries()).sort((a, b) =>
+  a[0].localeCompare(b[0])
+);
+---
+
+<Base
+  title="代谢酶索引 — PsychPedia"
+  description="CYP450 等代谢酶与相关药物的对应关系速查：每种酶涉及哪些药物、各自经何途径代谢。"
+>
+  <div class="mx-auto max-w-4xl px-4 py-10 md:px-6">
+    <header class="border-b border-slate-200 pb-6 dark:border-medical-line">
+      <h1 class="font-serif text-4xl font-black tracking-tight text-slate-900 dark:text-white">代谢酶索引</h1>
+      <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+        共 {groups.length} 种酶涉及当前收录药物的代谢途径，点击酶名查看相关药物。
+      </p>
+    </header>
+
+    {
+      families.map(([family, list]) => (
+        <section class="mt-8" aria-label={`${family} 家族`}>
+          <h2 class="font-serif text-lg font-bold text-slate-800 dark:text-slate-200">
+            {family} 家族
+            <span class="ml-1.5 text-xs font-normal text-slate-400">{list.length}</span>
+          </h2>
+          <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {list.map(({ enzyme, drugs }) => (
+              <a
+                href={`/enzymes/${enzyme}`}
+                class="rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-teal-400 dark:border-medical-line dark:bg-medical-surface dark:hover:border-teal-400"
+              >
+                <p class="font-mono text-sm font-bold text-slate-900 dark:text-white">{enzyme}</p>
+                <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">{drugs.length} 种药物</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</Base>

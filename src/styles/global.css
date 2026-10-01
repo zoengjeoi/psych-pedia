@@ -1,0 +1,279 @@
+@import 'tailwindcss';
+
+/* 类名式暗色模式（与旧版 html.dark 一致） */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* 字体 */
+  --font-sans: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  --font-serif: 'Fraunces', 'Noto Serif SC', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* medical 色板（沿用旧版视觉身份；暗色文字参照微信读书式柔和灰阶） */
+  --color-medical-dark: #0f1115;
+  --color-medical-dark-alt: #12151b;
+  --color-medical-panel: #161b22;
+  --color-medical-surface: #1a2029;
+  --color-medical-surface-alt: #232b36;
+  --color-medical-line: #232b36;
+  --color-medical-primary: #0ea5e9;
+  --color-medical-primary-bright: #7fb3e0;
+  --color-medical-primary-deep: #075ea8;
+  --color-medical-accent: #f5a524;
+  --color-medical-violet: #8b5cf6;
+  --color-medical-teal: #14b8a6;
+  --color-medical-success: #10b981;
+  --color-medical-danger: #ef4444;
+  --color-medical-text: #ccd4de;
+  --color-medical-muted: #8a94a3;
+}
+
+/* ---------- 基底 ---------- */
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* 标题排版：serif 家族 + 负字距（去 AI 味：靠字重与字号建立层级，而非装饰） */
+.font-serif {
+  letter-spacing: -0.015em;
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #a9b7cc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8fa1bb;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2a3a5e;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3a4f7a;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.35);
+  border-radius: 4px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105 / 0.5);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184 / 0.65);
+}
+
+/* ---------- 目录浮动面板（Toc 岛的动画由组件内联样式驱动） ---------- */
+.pp-toc-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.4) transparent;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+}
+
+/* ---------- 词条页宽窄模式（顶栏切换，默认宽屏） ---------- */
+.entry-shell {
+  max-width: 80rem; /* 宽屏：与旧版版面宽度一致，显示效率优先 */
+}
+html[data-pp-width='narrow'] .entry-shell {
+  max-width: 56rem; /* 窄屏：扫视轻松的阅读宽度 */
+}
+
+/* ---------- 品牌字标：天青→紫罗兰 渐变（比旧版深一档，避免俗气的淡紫） ---------- */
+.brand-gradient {
+  background-image: linear-gradient(115deg, #0369a1 0%, #0ea5e9 48%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .brand-gradient {
+  background-image: linear-gradient(115deg, #38bdf8 0%, #56c1ff 48%, #a78bfa 100%);
+}
+
+/* ---------- 侧栏折叠（仅桌面端） ---------- */
+@media (min-width: 64rem) {
+  .sidebar-panel {
+    transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sidebar-panel.collapsed {
+    width: 4rem;
+  }
+  .sidebar-panel.collapsed .sidebar-full {
+    display: none;
+  }
+  .sidebar-panel .sidebar-rail {
+    display: none;
+  }
+  .sidebar-panel.collapsed .sidebar-rail {
+    display: flex;
+  }
+}
+
+/* ---------- 目录面板弹出 ---------- */
+@keyframes pp-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pp-pop > div {
+  animation: pp-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 目录面板：贴顶栏左侧目录胶囊下方，从按钮位置放大展开 */
+.pp-toc-panel {
+  left: calc(18rem + 1.5rem);
+}
+html:has([data-sidebar-panel].collapsed) .pp-toc-panel {
+  left: calc(4rem + 1.5rem);
+}
+
+@keyframes pp-toc-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.86) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pp-toc-panel > div {
+  transform-origin: top left;
+  animation: pp-toc-grow 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ---------- TOC 侧滑抽屉（移动端，从右侧滑出） ---------- */
+.toc-drawer {
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s 0.45s;
+}
+.toc-drawer.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- 侧栏抽屉（仅窄屏；桌面端侧栏常驻，不参与位移） ---------- */
+/* 遮罩与目录抽屉同款：纯半透明黑 + 淡入淡出，无模糊（手机 GPU 上 backdrop-blur 是卡顿主因） */
+.sidebar-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (max-width: 63.98rem) {
+  .sidebar-panel {
+    transform: translateX(-100%);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sidebar-panel.open {
+    transform: translateX(0);
+  }
+}
+
+/* ---------- 首页唯一一次编排入场 ---------- */
+@keyframes pp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pp-enter {
+  animation: pp-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ---------- 雷达图标签 ---------- */
+.radar-tick-label {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.radar-tick-label:hover {
+  fill: #0ea5e9;
+}
+
+/* ---------- 正文内的状态图标（替代 ✅ / ❌ emoji） ---------- */
+.emoji-icon {
+  height: 1.05em;
+  width: 1.05em;
+  display: inline-block;
+  vertical-align: -0.16em;
+}
+
+/* ---------- 暗色模式柔和化（参照微信读书：正文柔灰、标题柔白、强调色低饱和） ---------- */
+.dark .wiki p,
+.dark .wiki li,
+.dark .wiki td,
+.dark .wiki dd,
+.dark .wiki figcaption,
+.dark .wiki blockquote {
+  color: #b6c0cf;
+}
+.dark .wiki h1,
+.dark .wiki h2,
+.dark .wiki h3,
+.dark .wiki h4,
+.dark .wiki h5,
+.dark .wiki h6 {
+  color: #dce3ec;
+}
+.dark .wiki strong {
+  color: #e4eaf2;
+}
+.dark .wiki a {
+  color: #82b5e6;
+}
+.dark .wiki th {
+  color: #d5dce5;
+}
+.dark [aria-label="临床实战笔记"] .text-slate-700 {
+  color: #b6c0cf;
+}

@@ -1,0 +1,556 @@
+---
+/**
+ * 新手引导（仅首页包含，词条页不渲染）。
+ * 点击「使用帮助」开始：半透明遮罩 + 聚光圈 + 手绘风宽拖尾箭头，逐步指向核心功能。
+ * 目标元素全部用站点现有结构选择器（搜索框 / 分类索引 / 侧栏 / 主题切换 / 帮助按钮本身），
+ * 不侵入其他组件；移动端与桌面端步骤自动分支。
+ * 遮罩层由脚本动态创建并挂到 document.body：组件按钮位于首页 hero 的入场动画容器内，
+ * 带 transform 的祖先会把 position:fixed 子孙变成相对它定位，挂到 body 才能按视口坐标工作。
+ * 脚本为文档级事件委托 + window 去重标志：View Transitions 换页后回到首页仍可再次触发。
+ */
+---
+
+<button
+  type="button"
+  data-tour-start
+  title="新手引导"
+  aria-label="开始使用引导"
+  class="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs text-slate-500 transition-colors hover:border-sky-400 hover:text-sky-600 dark:border-medical-line dark:bg-medical-panel/70 dark:text-slate-400 dark:hover:border-sky-400 dark:hover:text-sky-300"
+>
+  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"></path>
+  </svg>
+  使用帮助
+</button>
+
+<style is:global>
+  /* 前缀 pp-tour- 避免冲突；动态创建的元素（箭头/圆点）不经 Astro 作用域，故用 is:global */
+  #pp-help-tour [data-tour-catch] {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+  }
+  #pp-help-tour [data-tour-spot] {
+    position: fixed;
+    z-index: 61;
+    pointer-events: none;
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 2px rgba(14, 165, 233, 0.5),
+      0 0 28px rgba(14, 165, 233, 0.28),
+      0 0 0 9999px rgba(15, 17, 21, 0.55);
+    transition:
+      top 0.28s ease,
+      left 0.28s ease,
+      width 0.28s ease,
+      height 0.28s ease,
+      opacity 0.3s ease;
+  }
+  #pp-help-tour [data-tour-probe] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  #pp-help-tour [data-tour-arrow] {
+    position: fixed;
+    inset: 0;
+    z-index: 62;
+    pointer-events: none;
+  }
+  #pp-help-tour [data-tour-tip] {
+    position: fixed;
+    z-index: 63;
+    width: min(320px, calc(100vw - 24px));
+    border-radius: 14px;
+    padding: 14px 18px 16px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 18px 50px -12px rgba(2, 6, 23, 0.35);
+  }
+  .dark #pp-help-tour [data-tour-tip] {
+    background: #161b22;
+    border-color: #232b36;
+    box-shadow: 0 18px 50px -12px rgba(0, 0, 0, 0.6);
+  }
+  #pp-help-tour .pp-tour-count {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #94a3b8;
+  }
+  #pp-help-tour h3 {
+    margin-top: 4px;
+    font-family: var(--font-serif, serif);
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  .dark #pp-help-tour h3 {
+    color: #e2e8f0;
+  }
+  #pp-help-tour p {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #64748b;
+  }
+  .dark #pp-help-tour p {
+    color: #94a3b8;
+  }
+  /* 「关于」收尾页：更宽的居中卡片，正文左对齐分三段 */
+  #pp-help-tour [data-tour-tip].pp-about {
+    width: min(380px, calc(100vw - 24px));
+  }
+  #pp-help-tour .pp-about p:first-child {
+    margin-top: 2px;
+  }
+  #pp-help-tour .pp-about a {
+    color: #0ea5e9;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  #pp-help-tour .pp-about a:hover {
+    color: #0284c7;
+  }
+  .dark #pp-help-tour .pp-about a {
+    color: #38bdf8;
+  }
+  #pp-help-tour .pp-tour-controls {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #pp-help-tour [data-tour-skip] {
+    font-size: 12px;
+    color: #94a3b8;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 4px 2px;
+  }
+  #pp-help-tour [data-tour-skip]:hover {
+    color: #475569;
+  }
+  .dark #pp-help-tour [data-tour-skip]:hover {
+    color: #cbd5e1;
+  }
+  #pp-help-tour [data-tour-dots] {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+  }
+  #pp-help-tour .pp-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #cbd5e1;
+    transition:
+      background 0.2s,
+      transform 0.2s;
+  }
+  .dark #pp-help-tour .pp-dot {
+    background: #334155;
+  }
+  #pp-help-tour .pp-dot.on {
+    background: #0ea5e9;
+    transform: scale(1.3);
+  }
+  #pp-help-tour [data-tour-prev],
+  #pp-help-tour [data-tour-next] {
+    border-radius: 8px;
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      color 0.2s,
+      border-color 0.2s,
+      opacity 0.2s;
+  }
+  #pp-help-tour [data-tour-prev] {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+  }
+  #pp-help-tour [data-tour-prev]:hover:not(:disabled) {
+    color: #0ea5e9;
+    border-color: #7dd3fc;
+  }
+  #pp-help-tour [data-tour-prev]:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .dark #pp-help-tour [data-tour-prev] {
+    background: #1a2029;
+    border-color: #232b36;
+    color: #94a3b8;
+  }
+  #pp-help-tour [data-tour-next] {
+    border: 0;
+    background: #0ea5e9;
+    color: #fff;
+    font-weight: 600;
+  }
+  #pp-help-tour [data-tour-next]:hover {
+    background: #0284c7;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #pp-help-tour [data-tour-spot],
+    #pp-help-tour [data-tour-tip] {
+      transition: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    // 去重：is:inline 脚本在 View Transitions 换页回首页时可能再次执行，只绑一次文档级监听
+    if (window.__ppHelpTourBound) return;
+    window.__ppHelpTourBound = true;
+
+    const state = { steps: [], idx: 0, open: false };
+    const rootEl = () => document.getElementById('pp-help-tour');
+    const q = (sel) => (rootEl() ? rootEl().querySelector(sel) : null);
+    const visible = (el) =>
+      !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+
+    // 遮罩层模板：首次打开时创建并挂到 body（脱离 hero 动画容器的 containing block）
+    const OVERLAY_HTML =
+      '<div data-tour-catch aria-hidden="true"></div>' +
+      '<div data-tour-probe aria-hidden="true"></div>' +
+      '<div data-tour-spot aria-hidden="true"></div>' +
+      '<svg data-tour-arrow aria-hidden="true"></svg>' +
+      '<div data-tour-tip role="dialog" aria-modal="true" aria-label="使用引导">' +
+      '<div data-tour-count class="pp-tour-count">1 / 5</div>' +
+      '<h3 data-tour-title></h3>' +
+      '<p data-tour-body></p>' +
+      '<div class="pp-tour-controls">' +
+      '<button type="button" data-tour-skip>跳过引导</button>' +
+      '<div data-tour-dots aria-hidden="true"></div>' +
+      '<button type="button" data-tour-prev>上一步</button>' +
+      '<button type="button" data-tour-next>下一步</button>' +
+      '</div></div>';
+    const ensureRoot = () => {
+      let rt = document.getElementById('pp-help-tour');
+      if (!rt) {
+        rt = document.createElement('div');
+        rt.id = 'pp-help-tour';
+        rt.hidden = true;
+        rt.innerHTML = OVERLAY_HTML;
+        document.body.appendChild(rt);
+      }
+      return rt;
+    };
+
+    // 「关于」收尾页文案(静态内容,innerHTML 安全)
+    const ABOUT_HTML =
+      '<p>「忧心」是一名年轻的精神科临床工作者。最初搭建本站，只是想让自己临床查得更快、用得更稳；投入的时间越多，越希望它也能成为同行案头的一份速查参考。</p>' +
+      '<p>本站在 AI 辅助下搭建，词条内容也多由 AI 生成，目前正在逐条人工审核与校订；临床决策请以指南与药品说明书为准。</p>' +
+      '<p>问题和反馈欢迎：微信公众号「Koshi的后花园」后台私信，或邮件 <a href="mailto:yoki151720@gmail.com">yoki151720@gmail.com</a>——建议、勘误与合作，一并欢迎。</p>';
+
+    // 步骤定义：移动端与桌面端的「导航目录」指向不同元素
+    const buildSteps = () => {
+      const mobile = window.matchMedia('(max-width: 1023px)').matches;
+      const defs = [
+        {
+          sel: 'main input[type="text"]',
+          title: '全局搜索',
+          body: '输入药名、原理或关键词即可查找，支持中文、英文与拼音首字母；输入后下方分类索引会切换为搜索结果。',
+        },
+        {
+          sel: '#home-index > div:first-child',
+          title: '分类索引',
+          body: '全部药物按临床分类排列，下方还有「受体与假说」词条；点任意标签直达词条页。',
+        },
+        mobile
+          ? {
+              sel: '[data-sidebar-open]',
+              title: '导航目录',
+              body: '点左上角图标展开完整目录：药物分类、酶与原理速达。',
+            }
+          : {
+              sel: '[data-sidebar-panel]',
+              title: '导航目录',
+              body: '左侧常驻完整导航，可点 « 收起为窄条，把空间留给正文。',
+            },
+        {
+          sel: '[data-theme-toggle]',
+          title: '明暗主题',
+          body: '右上角切换浅色 / 深色模式，选择会被记住，下次打开自动应用。',
+        },
+        {
+          sel: '[data-tour-start]',
+          title: '随时回顾',
+          body: '忘记某个功能时，回到首页点「使用帮助」即可重温本引导。祝查阅顺利！',
+        },
+        {
+          about: true,
+          title: '关于本站',
+        },
+      ];
+      return defs
+        .map((d) => ({ ...d, el: d.sel ? document.querySelector(d.sel) : null }))
+        .filter((d) => d.about || visible(d.el));
+    };
+
+    // 取矩形上朝向目标点最近的边缘点（箭头起点/终点都落在边缘，不扎进元素内部）
+    const edgePoint = (r, toward) => ({
+      x: Math.min(Math.max(toward.x, r.left), r.right),
+      y: Math.min(Math.max(toward.y, r.top), r.bottom),
+    });
+
+    // 手绘风宽拖尾箭头：三层描边（晕 + 主笔 + 细复笔）+ 圆头 V 形箭簇，确定性微抖动
+    const drawArrow = (from, to, i) => {
+      const svg = q('[data-tour-arrow]');
+      if (!svg) return;
+      const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
+      const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
+      svg.setAttribute('width', String(vw));
+      svg.setAttribute('height', String(vh));
+      svg.setAttribute('viewBox', '0 0 ' + vw + ' ' + vh);
+
+      const dark = document.documentElement.classList.contains('dark');
+      const col = dark ? '#38bdf8' : '#0ea5e9';
+
+      let sx = from.x;
+      let sy = from.y;
+      let ex = to.x;
+      let ey = to.y;
+      const dx = ex - sx;
+      const dy = ey - sy;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      sx += ux * 6;
+      sy += uy * 6; // 离开气泡边缘一点
+      ex -= ux * 10;
+      ey -= uy * 10; // 箭簇前留白
+
+      const bend = (i % 2 ? -1 : 1) * Math.min(72, len * 0.45);
+      const px = -uy;
+      const py = ux;
+      const mx = (sx + ex) / 2 + px * bend;
+      const my = (sy + ey) / 2 + py * bend;
+      const jit = (n) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1) * 4 - 2;
+      const c1x = sx + (mx - sx) * 0.5 + px * jit(1);
+      const c1y = sy + (my - sy) * 0.5 + py * jit(2);
+      const c2x = mx + (ex - mx) * 0.5 + px * jit(3);
+      const c2y = my + (ey - my) * 0.5 + py * jit(4);
+
+      const d =
+        'M ' +
+        sx.toFixed(1) + ' ' + sy.toFixed(1) +
+        ' C ' + c1x.toFixed(1) + ' ' + c1y.toFixed(1) +
+        ', ' + c2x.toFixed(1) + ' ' + c2y.toFixed(1) +
+        ', ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
+
+      const ang = Math.atan2(ey - c2y, ex - c2x);
+      const hl = 13;
+      const a1 = ang + Math.PI - 0.5;
+      const a2 = ang + Math.PI + 0.5;
+      const hd =
+        'M ' + (ex + Math.cos(a1) * hl).toFixed(1) + ' ' + (ey + Math.sin(a1) * hl).toFixed(1) +
+        ' L ' + ex.toFixed(1) + ' ' + ey.toFixed(1) +
+        ' L ' + (ex + Math.cos(a2) * hl).toFixed(1) + ' ' + (ey + Math.sin(a2) * hl).toFixed(1);
+
+      const mk = (dd, w, o) => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', dd);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', col);
+        p.setAttribute('stroke-width', String(w));
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        p.setAttribute('opacity', String(o));
+        return p;
+      };
+      svg.replaceChildren(mk(d, 9, 0.14), mk(d, 4.5, 0.85), mk(d, 1.6, 0.4), mk(hd, 4.5, 0.9));
+
+      // 描线动画（尊重系统减弱动态设置）
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        svg.querySelectorAll('path').forEach((p) => {
+          const L = p.getTotalLength();
+          if (!L) return;
+          p.style.strokeDasharray = String(L);
+          p.style.strokeDashoffset = String(L);
+          p.getBoundingClientRect();
+          p.style.transition = 'stroke-dashoffset 0.45s ease-out';
+          p.style.strokeDashoffset = '0';
+        });
+      }
+    };
+
+    const place = () => {
+      const st = state.steps[state.idx];
+      if (!st) return close();
+      if (!st.about && !visible(st.el)) {
+        // 目标中途隐藏（如搜索时索引隐藏）：剔除当前步继续
+        state.steps.splice(state.idx, 1);
+        if (!state.steps.length) return close();
+        return show(state.idx % state.steps.length);
+      }
+      const spot = q('[data-tour-spot]');
+      const arrow = q('[data-tour-arrow]');
+      const tip = q('[data-tour-tip]');
+      // 包含块探针：祖先 transform/zoom 劫持 fixed 时，根内 fixed 元素渲染原点不再是视口 (0,0)。
+      // 测出偏移 (ox,oy)，后续所有坐标统一补偿——不依赖对布局的任何假设
+      const pr = q('[data-tour-probe]').getBoundingClientRect();
+      const ox = pr.x;
+      const oy = pr.y;
+      // clientWidth 不含滚动条，在缩放/内嵌视口下比 innerWidth 可靠；取较小值防溢出
+      const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
+      const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
+      tip.classList.toggle('pp-about', !!st.about);
+      spot.style.opacity = st.about ? '0' : '1';
+      arrow.style.display = st.about ? 'none' : '';
+      if (st.about) place.lastSig = ''; // 从「关于」折返时强制重放普通步定位
+      // 先填充内容再量尺寸：「关于」页正文较长，先量后填会导致居中偏移
+      q('[data-tour-count]').textContent = state.idx + 1 + ' / ' + state.steps.length;
+      q('[data-tour-title]').textContent = st.title;
+      if (st.about) q('[data-tour-body]').innerHTML = ABOUT_HTML;
+      else q('[data-tour-body]').textContent = st.body;
+      q('[data-tour-prev]').disabled = state.idx === 0;
+      q('[data-tour-next]').textContent = state.idx === state.steps.length - 1 ? '完成' : '下一步';
+      const tw = tip.offsetWidth;
+      const th = tip.offsetHeight;
+
+      let arrowFrom = null;
+      let arrowTo = null;
+      if (st.about) {
+        // 「关于」收尾页：无聚光无箭头，卡片视口居中
+        const tx = Math.max(12, (vw - tw) / 2 - ox);
+        const ty = Math.max(12, (vh - th) / 2 - oy);
+        tip.style.left = tx + 'px';
+        tip.style.top = ty + 'px';
+      } else {
+        const r = st.el.getBoundingClientRect();
+        // 位置未变化时跳过重绘：定时校正不会重放描线动画
+        const sig = [state.idx, Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), window.innerWidth, window.innerHeight].join('|');
+        if (sig !== place.lastSig) {
+          place.lastSig = sig;
+          const pad = 10;
+          spot.style.top = r.top - pad - oy + 'px';
+          spot.style.left = r.left - pad - ox + 'px';
+          spot.style.width = r.width + pad * 2 + 'px';
+          spot.style.height = r.height + pad * 2 + 'px';
+
+          const sc = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          const tx = Math.min(Math.max(12, sc.x - tw / 2), Math.max(12, vw - tw - 12)) - ox;
+          const gap = 72; // 留足箭头长度，手绘宽拖尾曲线才舒展
+          let ty;
+          if (r.bottom + gap + th < vh) ty = r.bottom + gap;
+          else if (r.top - gap - th > 0) ty = r.top - gap - th;
+          else ty = Math.min(Math.max(12, sc.y - th / 2), Math.max(12, vh - th - 12));
+          ty -= oy;
+          tip.style.left = tx + 'px';
+          tip.style.top = ty + 'px';
+
+          const tr = { left: tx + ox, right: tx + ox + tw, top: ty + oy, bottom: ty + oy + th };
+          const tc = { x: tr.left + tw / 2, y: tr.top + th / 2 };
+          const spotRect = { left: r.left - pad, right: r.right + pad, top: r.top - pad, bottom: r.bottom + pad };
+          arrowFrom = edgePoint(tr, sc);
+          arrowTo = edgePoint(spotRect, tc);
+        }
+      }
+      if (arrowFrom) {
+        // 箭头 svg 盒子在劫持包含块下整体偏移 (ox,oy)，路径坐标反向平移
+        drawArrow({ x: arrowFrom.x - ox, y: arrowFrom.y - oy }, { x: arrowTo.x - ox, y: arrowTo.y - oy }, state.idx);
+      }
+
+      const dots = q('[data-tour-dots]');
+      dots.innerHTML = '';
+      state.steps.forEach((_, i2) => {
+        const s = document.createElement('span');
+        s.className = 'pp-dot' + (i2 === state.idx ? ' on' : '');
+        dots.appendChild(s);
+      });
+    };
+
+    const show = (i) => {
+      state.idx = Math.max(0, Math.min(i, state.steps.length - 1));
+      place();
+    };
+
+    const open = () => {
+      state.steps = buildSteps();
+      if (!state.steps.length) return;
+      state.open = true;
+      ensureRoot();
+      place.lastSig = ''; // 重开时允许重新定位（否则 sig 去重会跳过，聚光圈停在 opacity:0）
+      rootEl().hidden = false;
+      document.documentElement.style.overflow = 'hidden';
+      q('[data-tour-spot]').style.opacity = '0';
+      requestAnimationFrame(() => show(0));
+      // 字体/图标等异步资源会引发回流：开场短窗内多次校正位置（有 sig 去重，不闪烁）
+      [400, 1000, 2000].forEach((ms) => setTimeout(() => { if (state.open) place(); }, ms));
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => { if (state.open) place(); }).catch(() => {});
+      }
+    };
+
+    const close = () => {
+      state.open = false;
+      const rt = rootEl();
+      if (rt) rt.hidden = true;
+      document.documentElement.style.overflow = '';
+    };
+
+    document.addEventListener('click', (e) => {
+      if (!(e.target instanceof Element)) return;
+      if (e.target.closest('[data-tour-start]')) {
+        open();
+        return;
+      }
+      if (!state.open) return;
+      if (e.target.closest('[data-tour-next]')) {
+        if (state.idx >= state.steps.length - 1) close();
+        else show(state.idx + 1);
+        return;
+      }
+      if (e.target.closest('[data-tour-prev]')) {
+        show(state.idx - 1);
+        return;
+      }
+      if (e.target.closest('[data-tour-skip]')) {
+        close();
+        return;
+      }
+      if (e.target.closest('[data-tour-catch]')) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!state.open) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowRight') show(state.idx + 1);
+      else if (e.key === 'ArrowLeft') show(state.idx - 1);
+    });
+
+    const reposition = () => {
+      const rt = rootEl();
+      if (state.open && rt && !rt.hidden) place();
+    };
+    window.addEventListener('resize', reposition, { passive: true });
+    window.addEventListener('scroll', reposition, { passive: true });
+    // 字体加载等回流不触发 resize/scroll：观察文档尺寸变化兜底
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(reposition).observe(document.documentElement);
+    }
+    // 手机地址栏收展/键盘弹出走 visualViewport，不一定触发 window resize
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', reposition, { passive: true });
+      window.visualViewport.addEventListener('scroll', reposition, { passive: true });
+    }
+    // 换页离开首页时收起，避免残留遮罩
+    document.addEventListener('astro:after-swap', () => {
+      if (state.open) close();
+    });
+  })();
+</script>

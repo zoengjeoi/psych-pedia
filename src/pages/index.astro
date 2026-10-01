@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import HomeSearch from '../components/islands/HomeSearch';
+import HelpTour from '../components/HelpTour.astro';
+import { buildEntryIndex, getDrugs, getPrinciples, groupDrugsByCategory } from '../lib/entries';
+
+const drugs = await getDrugs();
+const principles = await getPrinciples();
+const categoryGroups = groupDrugsByCategory(drugs);
+const entries = buildEntryIndex(drugs, principles);
+---
+
+<Base
+  title="PsychPedia — 精神药理学临床速查"
+  description="精神科药物、受体与生物学假说的临床速查百科，覆盖作用机制、药代动力学、临床适应症与用药实践要点。"
+>
+  <div class="mx-auto max-w-4xl px-4 py-12 md:px-6 md:py-16">
+    <!-- Hero：实色 serif 大标题，视觉重心靠字号与字重 -->
+    <div class="pp-enter mb-12 text-center">
+      <h1 class="brand-gradient font-serif text-[2.45rem] font-black leading-[1.12] tracking-tight md:text-[3.05rem]">
+        PsychPedia
+      </h1>
+      <p class="mt-4 text-slate-500 dark:text-slate-400">精神药理学临床速查</p>
+      <HomeSearch client:load entries={entries} />
+      <HelpTour />
+    </div>
+
+    <!-- 静态分类索引（搜索时由 HomeSearch 隐藏） -->
+    <div id="home-index">
+      <div
+        class="mb-6 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-medical-line"
+      >
+        <h2 class="font-serif text-xl font-bold text-slate-800 dark:text-slate-200">药物分类索引</h2>
+        <p class="text-xs text-slate-400 dark:text-slate-500">
+          {drugs.length} 种药物，{categoryGroups.length} 个分类
+        </p>
+      </div>
+
+      <div class="space-y-6">
+        {
+          categoryGroups.map(([cat, items]) => (
+            <section class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+              <div class="flex shrink-0 items-baseline gap-2 sm:w-52">
+                <h3 class="text-sm leading-snug font-semibold text-slate-700 dark:text-slate-300">{cat}</h3>
+                <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                  {items.length}
+                </span>
+              </div>
+              <div class="flex flex-1 flex-wrap gap-2">
+                {items.map((d) => (
+                  <a
+                    href={`/${d.data.id}`}
+                    title={`${d.data.name_cn} ${d.data.name_en}`}
+                    class="group inline-flex items-baseline gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm transition-colors hover:border-cyan-400 hover:text-cyan-600 dark:border-medical-line dark:bg-medical-panel dark:hover:border-cyan-400 dark:hover:text-cyan-300"
+                  >
+                    <span class="font-medium text-slate-700 group-hover:text-cyan-600 dark:text-slate-200 dark:group-hover:text-cyan-300">
+                      {d.data.name_cn}
+                    </span>
+                    <span class="hidden text-[10px] text-slate-400 group-hover:text-cyan-500 sm:inline dark:text-slate-500 dark:group-hover:text-cyan-400">
+                      {d.data.name_en}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))
+        }
+      </div>
+
+      <!-- 受体与假说 -->
+      <div
+        class="mt-10 mb-6 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-medical-line"
+      >
+        <h2 class="font-serif text-xl font-bold text-slate-800 dark:text-slate-200">受体与假说</h2>
+        <p class="text-xs text-slate-400 dark:text-slate-500">{principles.length} 个词条</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {
+          principles.map((p) => (
+            <a
+              href={`/${p.data.id}`}
+              title={p.data.title}
+              class="inline-flex items-baseline rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm transition-colors hover:border-violet-400 hover:text-violet-600 dark:border-medical-line dark:bg-medical-panel dark:hover:border-violet-400 dark:hover:text-violet-300"
+            >
+              <span class="font-medium text-slate-700 dark:text-slate-200">{p.data.title}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</Base>

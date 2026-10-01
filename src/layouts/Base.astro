@@ -1,0 +1,260 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Sidebar from '../components/Sidebar.astro';
+import TocMenu from '../components/islands/TocMenu';
+import type { TocItem } from '../lib/types';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** 词条页传入正文目录，顶栏渲染目录入口 */
+  toc?: TocItem[];
+  /** 词条页显示「宽屏 / 窄屏」切换按钮 */
+  showWidthToggle?: boolean;
+}
+
+const { title, description = '精神科药物、受体与生物学假说的临床速查百科', toc, showWidthToggle } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="generator" content={Astro.generator} />
+    <!-- 浏览器顶栏/状态栏取色:初始浅色;applyTheme/切换按钮按当前主题即时同步(夜间 #0f1115) -->
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <ClientRouter />
+    <script is:inline>
+      // 主题 + 版面宽度：首屏无闪烁；View Transitions 换页后 html 属性会被重建，需要重新应用
+      (() => {
+        const syncThemeColor = (dark) => {
+          // 手机浏览器会采集该值渲染顶栏/状态栏:日间纯白、夜间深底
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#0f1115' : '#ffffff');
+        };
+        const applyTheme = () => {
+          const saved = localStorage.getItem('pp-theme');
+          const dark = saved
+            ? saved === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', dark);
+          syncThemeColor(dark);
+        };
+        const applyWidth = () => {
+          document.documentElement.dataset.ppWidth =
+            localStorage.getItem('pp-width') === 'narrow' ? 'narrow' : 'wide';
+        };
+        applyTheme();
+        applyWidth();
+        document.addEventListener('astro:after-swap', () => {
+          applyTheme();
+          applyWidth();
+        });
+      })();
+    </script>
+  </head>
+  <body
+    class="bg-slate-50 text-slate-900 dark:bg-medical-dark dark:text-medical-text transition-colors duration-300"
+  >
+    <div class="flex min-h-screen">
+      <Sidebar />
+
+      <div class="flex min-w-0 flex-1 flex-col">
+        <!-- 顶栏：左侧目录入口（移动端汉堡），右侧宽窄与主题切换 -->
+        <header
+          class="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md sm:px-6 dark:border-medical-line dark:bg-medical-dark/80"
+        >
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              data-sidebar-open
+              class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-400 dark:hover:bg-medical-surface-alt"
+              aria-label="打开导航"
+            >
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+            {toc && toc.length > 0 && <TocMenu client:load items={toc} />}
+          </div>
+
+          <div class="flex items-center gap-2">
+            {
+              showWidthToggle && (
+                <button
+                  type="button"
+                  data-width-toggle
+                  class="hidden rounded-full bg-slate-100 p-2.5 text-slate-600 transition-colors hover:bg-slate-200 lg:inline-flex dark:bg-medical-surface dark:text-slate-300 dark:hover:bg-medical-surface-alt"
+                  title="切换宽屏 / 窄屏版面"
+                  aria-label="切换宽屏 / 窄屏版面"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12H2m0 0l3-3m-3 3l3 3m11-3h6m0 0l-3-3m3 3l-3 3"></path>
+                  </svg>
+                </button>
+              )
+            }
+            <button
+              type="button"
+              data-theme-toggle
+              class="rounded-full bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200 dark:bg-medical-surface dark:text-yellow-400 dark:hover:bg-medical-surface-alt"
+              aria-label="切换明暗主题"
+            >
+              <svg class="hidden h-5 w-5 dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+              <svg class="h-5 w-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <main id="main-content" class="flex-1">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <script is:inline>
+      // 全站交互委托：主题切换 / 返回 / 移动端侧栏抽屉（脚本去重，仅执行一次，换页后仍生效）
+      (() => {
+        // 本页签内发生过站内路由导航（含 View Transitions 与雷达图等程序化跳转），
+        // 则 history.back() 一定落在本站内；直接打开/外站来路则退回首页。
+        let internalNav = false;
+        document.addEventListener('astro:after-swap', () => {
+          internalNav = true;
+        });
+
+        const panel = () => document.querySelector('[data-sidebar-panel]');
+        const overlay = () => document.querySelector('[data-sidebar-overlay]');
+        const closeSidebar = () => {
+          panel()?.classList.remove('open');
+          overlay()?.classList.remove('open');
+        };
+
+        // 侧栏折叠（桌面端）：状态持久化到 localStorage
+        if (localStorage.getItem('pp-sidebar-collapsed') === '1') {
+          panel()?.classList.add('collapsed');
+        }
+
+        // 返回键显隐：只有从词条内部钻取（正文术语 / 酶链接 / 雷达靶点）进入的页面才显示。
+        // sessionStorage 维护一张 {页面路径, 是否钻取进入} 导航栈：
+        //   - 点击站内链接时压栈（按所在区域判定是否钻取）；
+        //   - 雷达图岛在跳转前自行压栈（d: true）；
+        //   - 点击返回时弹栈，回到上一页面后按其原始进入方式显隐。
+        const readStack = () => {
+          try {
+            return JSON.parse(sessionStorage.getItem('pp-navstack') || '[]');
+          } catch {
+            return [];
+          }
+        };
+        const writeStack = (s) => sessionStorage.setItem('pp-navstack', JSON.stringify(s.slice(-30)));
+
+        const applyBackVisibility = () => {
+          const stack = readStack();
+          const entry = [...stack].reverse().find((e) => e.p === location.pathname);
+          const showBack = entry ? entry.d : false;
+          document.querySelectorAll('[data-back]').forEach((b) => {
+            // 内联 style 优先于类里的 inline-flex，避免 hidden/inline-flex 顺序冲突
+            b.style.display = showBack ? '' : 'none';
+          });
+        };
+        applyBackVisibility();
+        document.addEventListener('astro:after-swap', applyBackVisibility);
+
+        document.addEventListener('click', (e) => {
+          const target = e.target instanceof Element ? e.target : null;
+          if (!target) return;
+          if (target.closest('[data-theme-toggle]')) {
+            const dark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('pp-theme', dark ? 'dark' : 'light');
+            // 与 head 脚本的 syncThemeColor 同步,但这里是独立内联脚本,直接更新 meta
+            const themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) themeMeta.setAttribute('content', dark ? '#0f1115' : '#ffffff');
+            return;
+          }
+          // 记录导航来源
+          const link = target.closest('a[href^="/"]:not([href="//"])');
+          if (link && !link.closest('[data-sidebar-panel], [data-toc-menu]')) {
+            const stack = readStack();
+            const dest = link.getAttribute('href');
+            const fromDepth =
+              !!link.closest('.wiki') ||
+              !!link.closest('[aria-label="临床实战笔记"]') ||
+              !!link.closest('[aria-label="药代动力学速览"]');
+            const last = stack[stack.length - 1];
+            if (last && last.p === dest) last.d = fromDepth;
+            else stack.push({ p: dest, d: fromDepth });
+            writeStack(stack);
+          }
+          if (target.closest('[data-width-toggle]')) {
+            const next = document.documentElement.dataset.ppWidth === 'narrow' ? 'wide' : 'narrow';
+            document.documentElement.dataset.ppWidth = next;
+            localStorage.setItem('pp-width', next);
+            return;
+          }
+          if (target.closest('[data-sidebar-collapse]')) {
+            const collapsed = panel()?.classList.toggle('collapsed');
+            localStorage.setItem('pp-sidebar-collapsed', collapsed ? '1' : '0');
+            return;
+          }
+          if (target.closest('[data-back]')) {
+            const stack = readStack();
+            const idx = stack.map((e) => e.p).lastIndexOf(location.pathname);
+            if (idx >= 0) stack.splice(idx, 1);
+            writeStack(stack);
+            const sameOriginReferrer = (() => {
+              try {
+                return document.referrer ? new URL(document.referrer).origin === location.origin : false;
+              } catch {
+                return false;
+              }
+            })();
+            if (internalNav || sameOriginReferrer) {
+              history.back();
+            } else {
+              location.href = '/';
+            }
+            return;
+          }
+          if (target.closest('[data-sidebar-open]')) {
+            panel()?.classList.add('open');
+            overlay()?.classList.add('open');
+            return;
+          }
+          if (target.closest('[data-sidebar-close]') || target.closest('[data-sidebar-overlay]')) {
+            closeSidebar();
+          }
+        });
+
+        // 点击链接换页后收起抽屉
+        document.addEventListener('click', (e) => {
+          if (!(e.target instanceof Element)) return;
+          if (e.target.closest('[data-sidebar-panel] a')) {
+            if (window.innerWidth < 1024) closeSidebar();
+          }
+        });
+        document.addEventListener('astro:after-swap', closeSidebar);
+      })();
+    </script>
+  </body>
+</html>

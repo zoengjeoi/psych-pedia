@@ -1,0 +1,261 @@
+---
+/**
+ * 药物词条正文（服务端渲染）。
+ * 版式：信息分区一律落在纯色卡片上（白/暗色 surface），分区标题精简为单行；
+ * 视觉锚点是词条头的大号 serif 药名；等宽字体只留给真实实验数值。
+ */
+import type { CollectionEntry } from 'astro:content';
+import RadarViz from './islands/RadarViz';
+import { drugCategories } from '../lib/entries';
+import { renderWiki } from '../lib/markdown';
+import type { Pearl, WikiPattern } from '../lib/types';
+
+interface Props {
+  entry: CollectionEntry<'drugs'>;
+  wiki: { html: string; toc: import('../lib/types').TocItem[] };
+  patterns: WikiPattern[];
+}
+
+const { entry, wiki, patterns } = Astro.props;
+const drug = entry.data;
+const categories = drugCategories(entry);
+const dosageForms = drug.pk_data?.dosage_forms ?? [];
+const primaryHalfLife = dosageForms[0]?.half_life ?? drug.pk_data?.half_life ?? '—';
+const otherForms = dosageForms.slice(1);
+const hasRadar = Boolean(
+  drug.stahl_radar?.bindings?.length ||
+    (drug.stahl_radar?.labels?.length && drug.stahl_radar?.values?.length)
+);
+
+// 实战笔记同样走渲染管线，让笔记里的受体术语可跳转
+const pearlsHtml = await Promise.all(
+  drug.pearls.map((p) => renderWiki(p.content, patterns))
+);
+
+const PEARL_STYLES: Record<
+  Pearl['type'],
+  { border: string; bg: string; title: string; icon: string; path: string }
+> = {
+  danger: {
+    border: 'border-red-500',
+    bg: 'bg-red-50 dark:bg-red-900/10',
+    title: 'text-red-900 dark:text-red-200',
+    icon: 'text-red-500',
+    path: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+  },
+  warning: {
+    border: 'border-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-900/10',
+    title: 'text-amber-900 dark:text-amber-200',
+    icon: 'text-amber-500',
+    path: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  success: {
+    border: 'border-emerald-500',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/10',
+    title: 'text-emerald-900 dark:text-emerald-200',
+    icon: 'text-emerald-500',
+    path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  info: {
+    border: 'border-sky-500',
+    bg: 'bg-sky-50 dark:bg-sky-900/10',
+    title: 'text-sky-900 dark:text-sky-200',
+    icon: 'text-sky-500',
+    path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+};
+
+// 把代谢途径字符串渲染为带酶链接的片段
+const metabolismParts = (() => {
+  const text = drug.pk_data?.metabolism ?? '';
+  if (!text) return [] as { kind: 'text' | 'enzyme'; value: string }[];
+  const parts: { kind: 'text' | 'enzyme'; value: string }[] = [];
+  const regex = new RegExp(`\\b(?:CYP|UGT|MAO|COMT|FMO|CES)\\d+[A-Z0-9]*\\b`, 'gi');
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push({ kind: 'text', value: text.slice(last, m.index) });
+    parts.push({ kind: 'enzyme', value: m[0].toUpperCase() });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ kind: 'text', value: text.slice(last) });
+  return parts;
+})();
+
+const marketRows: [string, string | undefined][] = [
+  ['价格 / 供应', drug.market_info?.price],
+  ['医保状态', drug.market_info?.insurance],
+  ['妊娠分级', drug.market_info?.pregnancy],
+];
+
+const PK_CARD =
+  'flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white text-center dark:border-medical-line dark:bg-medical-surface';
+const PK_LABEL = 'text-[11px] font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500';
+---
+
+<div class="entry-shell mx-auto w-full px-4 py-8 md:px-8 md:py-10">
+  <button
+    type="button"
+    data-back
+    class="hidden mb-5 inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-slate-900 dark:text-slate-500 dark:hover:text-white"
+  >
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    </svg>
+    返回
+  </button>
+
+  <!-- 词条头：视觉锚点 -->
+  <header class="pb-4">
+    <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+      <h1 class="font-serif text-4xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-slate-200">
+        {drug.name_cn}
+      </h1>
+      <p class="text-xl text-slate-400 sm:text-2xl dark:text-slate-500">{drug.name_en}</p>
+    </div>
+    <p class="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+      {categories.join(' · ')}
+    </p>
+    {
+      drug.tags.length > 0 && (
+        <ul class="mt-3 flex flex-wrap gap-2" role="list">
+          {drug.tags.map((tag) => (
+            <li class="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-0.5 text-xs font-medium text-cyan-700 dark:border-cyan-800/50 dark:bg-cyan-900/20 dark:text-cyan-200/90">
+              {tag}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </header>
+
+  <!-- PK 三卡（居中紧凑，移动端优先阅读效率） -->
+  {
+    (primaryHalfLife !== '—' || drug.pk_data?.protein_binding || drug.pk_data?.metabolism) && (
+      <section aria-label="药代动力学速览" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class={`${PK_CARD} px-3 py-2.5`}>
+          <span class={PK_LABEL}>半衰期 (T1/2)</span>
+          <p class="mt-1 font-mono text-xl font-bold text-slate-900 dark:text-slate-200">
+            {primaryHalfLife}
+          </p>
+          {otherForms.length > 0 && (
+            <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              其他剂型：
+              {otherForms.map((f) => `${f.formulation} ${f.half_life}`).join('，')}
+            </p>
+          )}
+        </div>
+        <div class={`${PK_CARD} px-3 py-2.5`}>
+          <span class={PK_LABEL}>蛋白结合率</span>
+          <p class="mt-1 font-mono text-xl font-bold text-slate-900 dark:text-slate-200">
+            {drug.pk_data?.protein_binding ?? '—'}
+          </p>
+        </div>
+        <div class={`${PK_CARD} px-3 py-2.5`}>
+          <span class={PK_LABEL}>主要代谢途径</span>
+          <p class="mt-1 text-lg font-bold text-slate-900 dark:text-slate-200">
+            {metabolismParts.length === 0 && '—'}
+            {metabolismParts.map((part) =>
+              part.kind === 'enzyme' ? (
+                <a
+                  href={`/enzymes/${part.value}`}
+                  class="font-mono text-medical-primary-deep hover:underline dark:text-medical-primary-bright"
+                >
+                  {part.value}
+                </a>
+              ) : (
+                <span class="font-normal">{part.value}</span>
+              )
+            )}
+          </p>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 靶点雷达 + 临床实战笔记 -->
+  {
+    (hasRadar || drug.pearls.length > 0) && (
+      <div class={`mt-6 grid gap-4 ${hasRadar ? 'lg:grid-cols-2' : ''}`}>
+        {hasRadar && (
+          <section
+            aria-label="靶点雷达图"
+            class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 dark:border-medical-line dark:bg-medical-surface"
+          >
+            <h2 class="mb-1 px-1 font-serif text-base font-bold text-slate-800 dark:text-slate-100">
+              靶点雷达图
+            </h2>
+            <p class="mb-2 px-1 text-xs text-slate-400 dark:text-slate-500">
+              结合强度 0–10，点击靶点名称可跳转对应词条
+            </p>
+            <div class="h-72 sm:h-96">
+              <RadarViz client:visible data={drug.stahl_radar!} />
+            </div>
+          </section>
+        )}
+
+        {drug.pearls.length > 0 && (
+          <section aria-label="临床实战笔记" class={hasRadar ? '' : 'lg:col-span-2'}>
+            <h2 class="font-serif text-lg font-bold text-slate-800 dark:text-slate-200">临床实战笔记</h2>
+            <ul class="mt-4 space-y-3" role="list">
+              {drug.pearls.map((pearl, idx) => {
+                const style = PEARL_STYLES[pearl.type] ?? PEARL_STYLES.info;
+                return (
+                  <li class={`rounded-lg border-l-4 p-4 shadow-sm ${style.border} ${style.bg}`}>
+                    <h3 class={`mb-1.5 flex items-start gap-2 text-sm font-bold tracking-wide ${style.title}`}>
+                      <svg
+                        class={`mt-0.5 h-4 w-4 shrink-0 ${style.icon}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={style.path}></path>
+                      </svg>
+                      {pearl.title}
+                    </h3>
+                    <div
+                      class="text-sm leading-relaxed text-slate-700 [&_p]:mb-0 dark:text-slate-300"
+                      set:html={pearlsHtml[idx].html}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+      </div>
+    )
+  }
+
+  <!-- 市场与处方信息：单卡 -->
+  {
+    marketRows.some(([, v]) => v) && (
+      <section aria-label="市场与处方信息" class="mt-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-medical-line dark:bg-medical-surface">
+          <h2 class={PK_LABEL}>市场与处方信息</h2>
+          <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+            {marketRows.map(([label, value]) => (
+              <div>
+                <dt class="text-xs text-slate-400 dark:text-slate-500">{label}</dt>
+                <dd class="mt-0.5 font-medium text-slate-700 dark:text-slate-200">{value ?? '—'}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 百科正文卡片（与上方版面同宽对齐；目录入口在顶栏右侧） -->
+  {
+    wiki.html && (
+      <section class="mt-4" aria-label="百科正文">
+        <div
+          class="wiki rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:px-8 dark:border-medical-line dark:bg-medical-surface"
+          set:html={wiki.html}
+        />
+      </section>
+    )
+  }
+</div>

@@ -1,0 +1,75 @@
+---
+import Base from '../../layouts/Base.astro';
+import { buildEnzymeMap, drugCategories, type EnzymeGroup } from '../../lib/entries';
+
+export async function getStaticPaths() {
+  const groups = await buildEnzymeMap();
+  return groups.map((group) => ({
+    params: { enzyme: group.enzyme },
+    props: { group },
+  }));
+}
+
+const { group } = Astro.props as { group: EnzymeGroup };
+---
+
+<Base
+  title={`${group.enzyme} — 代谢酶与药物 — PsychPedia`}
+  description={`${group.enzyme} 代谢途径涉及 ${group.drugs.length} 种药物：${group.drugs
+    .map((d) => d.data.name_cn)
+    .slice(0, 8)
+    .join('、')} 等。`}
+>
+  <div class="mx-auto max-w-4xl px-4 py-10 md:px-6">
+    <button
+      type="button"
+      data-back
+      class="hidden mb-5 inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-slate-900 dark:text-slate-500 dark:hover:text-white"
+    >
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      返回
+    </button>
+
+    <header class="border-b border-slate-200 pb-6 dark:border-medical-line">
+      <p class="mb-3 inline-block rounded bg-teal-100 px-2 py-0.5 text-xs font-bold tracking-wider text-teal-800 dark:bg-teal-500/15 dark:text-teal-300">
+        代谢酶
+      </p>
+      <h1 class="font-mono text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+        {group.enzyme}
+      </h1>
+      <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+        共 {group.drugs.length} 种药物经此酶代谢（或为其底物 / 抑制剂 / 诱导剂）。
+      </p>
+    </header>
+
+    <ul class="mt-6 divide-y divide-slate-200 dark:divide-medical-line" role="list">
+      {
+        group.drugs.map((drug) => (
+          <li>
+            <a
+              href={`/${drug.data.id}`}
+              class="group flex flex-col gap-1 py-4 transition-colors sm:flex-row sm:items-baseline sm:justify-between"
+            >
+              <div class="flex items-baseline gap-3">
+                <span class="font-serif text-lg font-bold text-slate-900 group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-400">
+                  {drug.data.name_cn}
+                </span>
+                <span class="text-sm text-slate-400 dark:text-slate-500">{drug.data.name_en}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-slate-400 dark:text-slate-500">
+                  代谢途径：{drug.data.pk_data?.metabolism ?? '—'}
+                </span>
+                <span class="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                  {drugCategories(drug)[0]}
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>

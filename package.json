@@ -1,31 +1,46 @@
 {
-  "name": "psych-pedia",
-  "private": true,
-  "version": "0.0.0",
+  "name": "psych-pedia-v2",
   "type": "module",
+  "version": "2.0.0",
+  "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "sync": "node scripts/md-to-json.js",
-    "migrate": "node scripts/json-to-md.js"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "normalize-content": "node scripts/normalize-content.mjs",
+    "generate-icons": "node scripts/generate-icons.mjs",
+    "image-host": "node scripts/image-host.mjs",
+    "upload-image": "node scripts/upload-image.mjs",
+    "generate": "node scripts/generate-with-gemini.mjs"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/react": "^4.4.0",
+    "@google/genai": "^2.25.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@vite-pwa/astro": "^1.1.0",
+    "astro": "^5.14.1",
     "gray-matter": "^4.0.3",
-    "pinyin": "^4.0.0",
-    "pinyin-match": "^1.2.10",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-markdown": "^10.1.0",
-    "recharts": "2.12.2",
+    "mdast-util-to-string": "^4.0.0",
+    "pinyin-match": "^1.2.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
     "rehype-raw": "^7.0.0",
-    "rehype-sanitize": "^6.0.0",
-    "remark-gfm": "^4.0.1"
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.6.3",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "sharp": "^0.35.5"
   }
 }
