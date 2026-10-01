@@ -205,6 +205,42 @@ html:has([data-sidebar-panel].collapsed) .pp-toc-panel {
   opacity: 1;
   pointer-events: auto;
 }
+
+/* ---------- 路由加载指示（v1 同款：内容区局部转圈，顶栏/侧栏/目录保持原位，无任何过渡） ---------- */
+#pp-loader {
+  position: fixed;
+  top: 4rem; /* 露出顶栏（h-16），菜单按钮不被动 */
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 35; /* 高于遮罩(z-30)、低于侧栏与目录面板(z-40)：菜单永远在原位 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+#pp-loader.on {
+  display: flex;
+}
+.dark #pp-loader {
+  background: #0f1115;
+}
+/* 桌面端让出左侧常驻侧栏（展开 18rem / 折叠 4rem），手机端侧栏抽屉本就收起，全宽即可 */
+@media (min-width: 64rem) {
+  #pp-loader {
+    left: 18rem;
+  }
+  html:has([data-sidebar-panel].collapsed) #pp-loader {
+    left: 4rem;
+  }
+}
+
+/* 禁用 View Transitions 默认的整页交叉淡化：换页零过渡，配合局部转圈才有 v1 的速度感 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
 @media (max-width: 63.98rem) {
   .sidebar-panel {
     transform: translateX(-100%);
@@ -213,21 +249,6 @@ html:has([data-sidebar-panel].collapsed) .pp-toc-panel {
   .sidebar-panel.open {
     transform: translateX(0);
   }
-}
-
-/* ---------- 首页唯一一次编排入场 ---------- */
-@keyframes pp-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.pp-enter {
-  animation: pp-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ---------- 雷达图标签 ---------- */

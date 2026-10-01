@@ -33,6 +33,11 @@
     position: fixed;
     inset: 0;
     z-index: 60;
+    transition: background 0.3s ease;
+  }
+  /* 「关于」页没有聚光圈（暗化本由聚光的 9999px 投影承担），此时改由 catch 层提供同色遮罩 */
+  #pp-help-tour [data-tour-catch].pp-dim {
+    background: rgba(15, 17, 21, 0.55);
   }
   #pp-help-tour [data-tour-spot] {
     position: fixed;
@@ -252,9 +257,8 @@
 
     // 「关于」收尾页文案(静态内容,innerHTML 安全)
     const ABOUT_HTML =
-      '<p>「忧心」是一名年轻的精神科临床工作者。最初搭建本站，只是想让自己临床查得更快、用得更稳；投入的时间越多，越希望它也能成为同行案头的一份速查参考。</p>' +
-      '<p>本站在 AI 辅助下搭建，词条内容也多由 AI 生成，目前正在逐条人工审核与校订；临床决策请以指南与药品说明书为准。</p>' +
-      '<p>问题和反馈欢迎：微信公众号「Koshi的后花园」后台私信，或邮件 <a href="mailto:yoki151720@gmail.com">yoki151720@gmail.com</a>——建议、勘误与合作，一并欢迎。</p>';
+      '<p>本百科建于 2026 年 1 月 15 日。</p>' +
+      '<p>意见反馈可通过公众号「Koshi的后花园」或邮件 <a href="mailto:yoki151720@gmail.com">yoki151720@gmail.com</a> 联系。</p>';
 
     // 步骤定义：移动端与桌面端的「导航目录」指向不同元素
     const buildSteps = () => {
@@ -293,7 +297,7 @@
         },
         {
           about: true,
-          title: '关于本站',
+          title: '关于',
         },
       ];
       return defs
@@ -411,6 +415,8 @@
       tip.classList.toggle('pp-about', !!st.about);
       spot.style.opacity = st.about ? '0' : '1';
       arrow.style.display = st.about ? 'none' : '';
+      // 「关于」页无聚光圈，暗化改由 catch 层接管，避免弹窗后面杂乱显得视觉疲劳
+      q('[data-tour-catch]').classList.toggle('pp-dim', !!st.about);
       if (st.about) place.lastSig = ''; // 从「关于」折返时强制重放普通步定位
       // 先填充内容再量尺寸：「关于」页正文较长，先量后填会导致居中偏移
       q('[data-tour-count]').textContent = state.idx + 1 + ' / ' + state.steps.length;

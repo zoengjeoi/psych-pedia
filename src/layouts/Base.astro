@@ -133,6 +133,15 @@ const { title, description = '精神科药物、受体与生物学假说的临�
       </div>
     </div>
 
+    <!-- 路由加载指示：v1 同款，点击立即转圈，完成立即消失。
+         只盖内容区（CSS 控制边界与层级），顶栏/侧栏/目录面板保持原位 -->
+    <div id="pp-loader" aria-hidden="true">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+        <p class="text-slate-500 dark:text-slate-400">加载中…</p>
+      </div>
+    </div>
+
     <script is:inline>
       // 全站交互委托：主题切换 / 返回 / 移动端侧栏抽屉（脚本去重，仅执行一次，换页后仍生效）
       (() => {
@@ -142,6 +151,14 @@ const { title, description = '精神科药物、受体与生物学假说的临�
         document.addEventListener('astro:after-swap', () => {
           internalNav = true;
         });
+
+        // 路由加载指示：v1 同款，点击立即转圈，完成立即消失（无定时器、无过渡）
+        const loader = document.getElementById('pp-loader');
+        const hideLoader = () => loader?.classList.remove('on');
+        document.addEventListener('astro:before-preparation', () => loader?.classList.add('on'));
+        document.addEventListener('astro:page-load', hideLoader);
+        document.addEventListener('astro:after-swap', hideLoader);
+        window.addEventListener('pageshow', hideLoader);
 
         const panel = () => document.querySelector('[data-sidebar-panel]');
         const overlay = () => document.querySelector('[data-sidebar-overlay]');

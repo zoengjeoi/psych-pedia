@@ -12,6 +12,8 @@ export default defineConfig({
   // 关闭 Dev Toolbar：它只在 astro dev 出现，生产构建本就不含；
   // 配置级关闭后所有设备（含手机调试）都不再显示，无需每人手动 astro preferences disable
   devToolbar: { enabled: false },
+  // 悬停预取内部链接：切词条基本瞬时完成，加载转圈只在慢网兜底出现
+  prefetch: true,
   integrations: [
     react(),
     AstroPWA({

@@ -96,7 +96,7 @@ const HomeSearch: React.FC<Props> = ({ entries }) => {
       </div>
 
       {searching && (
-        <div className="pp-enter mt-10 space-y-8 text-left">
+        <div className="mt-10 space-y-8 text-left">
           {results.drugs.length > 0 && (
             <section>
               <h3 className="mb-3 font-serif font-bold text-slate-800 dark:text-slate-200">
