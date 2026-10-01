@@ -153,9 +153,11 @@ const { title, description = '精神科药物、受体与生物学假说的临�
         });
 
         // 路由加载指示：v1 同款，点击立即转圈，完成立即消失（无定时器、无过渡）
-        const loader = document.getElementById('pp-loader');
-        const hideLoader = () => loader?.classList.remove('on');
-        document.addEventListener('astro:before-preparation', () => loader?.classList.add('on'));
+        // 每次事件都重新 getElementById：View Transitions 换页会整块替换 <body>，
+        // 缓存元素引用的话，第二次换页起 class 就加到了游离节点上，转圈不再出现
+        const showLoader = () => document.getElementById('pp-loader')?.classList.add('on');
+        const hideLoader = () => document.getElementById('pp-loader')?.classList.remove('on');
+        document.addEventListener('astro:before-preparation', showLoader);
         document.addEventListener('astro:page-load', hideLoader);
         document.addEventListener('astro:after-swap', hideLoader);
         window.addEventListener('pageshow', hideLoader);
