@@ -1,0 +1,240 @@
+---
+/**
+ * 【设计 demo · 未接入导航】受体条目新版式试点（5-HT2A）。
+ * 内容大纲来自用户提供的 1.html；版式为站内既有设计语言的重排，
+ * 通过 /demo/5ht2a 访问，确认后再决定是否落地为受体系列模板。
+ */
+import Base from '../../layouts/Base.astro';
+
+// 靶向药物亲和力排名（Ki 单位 nM；bar 宽度线性比例，以最强者为 100% 预计算）
+const affinityRanking = [
+  { name: '利培酮', en: 'Risperidone', cls: 'SGA · 强效拮抗', ki: 0.6, kiText: '0.6', bar: 100, href: '/risperidone' },
+  { name: '齐拉西酮', en: 'Ziprasidone', cls: 'SGA · 强效拮抗', ki: 2, kiText: '2', bar: 100, href: '/ziprasidone' },
+  { name: '奥氮平', en: 'Olanzapine', cls: 'SGA · MARTA', ki: 4, kiText: '4', bar: 100, href: '/olanzapine' },
+  { name: '氯氮平', en: 'Clozapine', cls: 'SGA · 弱亲和', ki: 12, kiText: '12', bar: 83, href: '/clozapine' },
+];
+
+const interventions = [
+  {
+    mode: '完全激动',
+    color: 'bg-rose-500',
+    effect: '皮层锥体细胞谷氨酸过度释放',
+    clinic: '幻觉、感知扭曲、精神病性体验',
+    drugs: [{ name: '致幻剂（LSD、裸盖菇素）', href: null }],
+  },
+  {
+    mode: '强效拮抗',
+    color: 'bg-cyan-500',
+    effect: '降低谷氨酸兴奋毒性；纹状体多巴胺去抑制释放',
+    clinic: '减少 EPS、抗精神病增效、增加慢波睡眠',
+    drugs: [
+      { name: '奥氮平', href: '/olanzapine' },
+      { name: '利培酮', href: '/risperidone' },
+      { name: '喹硫平', href: '/quetiapine' },
+    ],
+  },
+  {
+    mode: '反向激动',
+    color: 'bg-amber-500',
+    effect: '选择性下调基础构象活性，不影响 D<sub>2</sub> 信号',
+    clinic: '控制帕金森精神病症状，同时不恶化运动障碍',
+    drugs: [{ name: '匹莫范色林 Pimavanserin', href: null }],
+  },
+];
+---
+
+<Base title="5-HT2A 受体 Serotonin 2A Receptor — PsychPedia">
+  <div class="entry-shell mx-auto w-full px-4 py-8 md:px-8 md:py-10">
+    <button
+      type="button"
+      data-back
+      class="hidden mb-5 inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-slate-900 dark:text-slate-500 dark:hover:text-white"
+    >
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      返回
+    </button>
+
+    <!-- 词条头 -->
+    <header class="border-b border-slate-200 pb-6 dark:border-medical-line">
+      <p class="mb-3 inline-block rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 dark:border-medical-line dark:bg-medical-surface-alt dark:text-slate-400">
+        受体百科 · G 蛋白偶联受体（Gq/11 偶联）
+      </p>
+      <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <h1 class="font-serif text-4xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-slate-200">
+          5-HT<sub>2A</sub> 受体
+        </h1>
+        <p class="text-xl text-slate-400 sm:text-2xl dark:text-slate-500">Serotonin 2A Receptor</p>
+      </div>
+
+      <!-- 一句话机制定性（引用框样式） -->
+      <aside
+        class="mt-5 rounded-lg bg-slate-100 px-4 py-3 text-[15px] leading-relaxed text-slate-700 dark:bg-medical-surface-alt dark:text-slate-300"
+        aria-label="机制一句话定性"
+      >
+        <div class="md-quote-label mb-2">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zM24 3v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-4v-10h9.983z"/></svg>
+          <span>引用</span>
+        </div>
+        <strong class="font-semibold text-slate-900 dark:text-slate-100">SGA（非典型抗精神病药）的特征性靶点：</strong>
+        阻断 5-HT<sub>2A</sub> 可减少皮层谷氨酸释放，进而解除对中脑多巴胺通路的间接抑制，促进纹状体多巴胺释放，从而显著降低 EPS 风险并改善慢波睡眠。
+      </aside>
+    </header>
+
+    <!-- 基本信息：药物页同款 PK 卡样式 -->
+    <section class="mt-8" aria-label="基本信息">
+      <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">基本信息</h2>
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+          <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">受体类型</span>
+          <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200">GPCR · Gq/11 偶联</span>
+          <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">激活 IP<sub>3</sub> / DAG 通路</span>
+        </div>
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+          <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">突触定位</span>
+          <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200">突触后膜</span>
+          <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">主要作为异源受体接收信号</span>
+        </div>
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+          <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">内源性配体</span>
+          <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200">5-羟色胺 (5-HT)</span>
+          <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">亲和力约中等水平</span>
+        </div>
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+          <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">核心分布脑区</span>
+          <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200">前额叶皮层（锥体细胞）</span>
+          <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">纹状体、血小板、胃肠道</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 干预模式与临床结局 -->
+    <section class="mt-10" aria-label="干预模式与临床结局">
+      <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">干预模式与临床结局</h2>
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-medical-line">
+        <table class="w-full min-w-[42rem] text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-medical-surface-alt dark:text-slate-400">
+            <tr>
+              <th class="px-4 py-2.5 font-semibold">干预模式</th>
+              <th class="px-4 py-2.5 font-semibold">细胞与环路效应</th>
+              <th class="px-4 py-2.5 font-semibold">核心临床表现</th>
+              <th class="px-4 py-2.5 font-semibold">代表药物</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white text-slate-700 dark:divide-medical-line dark:bg-medical-surface dark:text-slate-300">
+            {
+              interventions.map((row) => (
+                <tr class="transition-colors hover:bg-slate-50/70 dark:hover:bg-medical-surface-alt/60">
+                  <td class="whitespace-nowrap px-4 py-3 align-top">
+                    <span class="inline-flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100">
+                      <span class={`inline-block h-1.5 w-1.5 rounded-full ${row.color}`} aria-hidden="true" />
+                      {row.mode}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-top" set:html={row.effect} />
+                  <td class="px-4 py-3 align-top">{row.clinic}</td>
+                  <td class="px-4 py-3 align-top">
+                    <div class="text-slate-700 dark:text-slate-300">
+                      {row.drugs.map((d, j) => (
+                        <>
+                          {j > 0 && '、'}
+                          {d.href ? (
+                            <a
+                              href={d.href}
+                              class="font-medium text-cyan-700 transition-colors hover:text-cyan-600 hover:underline dark:text-cyan-300"
+                            >
+                              {d.name}
+                            </a>
+                          ) : (
+                            <span>{d.name}</span>
+                          )}
+                        </>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 靶向药物亲和力排名 -->
+    <section class="mt-10" aria-label="靶向该受体的代表药物">
+      <h2 class="mb-1 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">靶向该受体的代表药物</h2>
+      <p class="mb-3 text-xs text-slate-400 dark:text-slate-500">
+        按 K<sub>i</sub> 亲和力排序；条长按 K<sub>i</sub> 线性比例（Ki ≤ 10 nM 为满条）；点击药物名称跳转词条。数值供横向比较[需核实]。
+      </p>
+      <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-medical-line">
+        <div class="grid grid-cols-[8rem_1fr_4.5rem] items-center gap-x-3 bg-slate-50 px-4 py-2 text-[11px] font-semibold text-slate-500 sm:grid-cols-[13rem_1fr_4.5rem] dark:bg-medical-surface-alt dark:text-slate-400">
+          <span>药物</span>
+          <span>亲和力（线性比例，以最强者为 100%）</span>
+          <span class="justify-self-end">Ki (nM)</span>
+        </div>
+        <div class="divide-y divide-slate-100 bg-white dark:divide-medical-line dark:bg-medical-surface">
+          {
+            affinityRanking.map((d) => (
+              <a
+                href={d.href}
+                class="group grid grid-cols-[8rem_1fr_4.5rem] items-center gap-x-3 px-4 py-2.5 transition-colors hover:bg-slate-50/70 sm:grid-cols-[13rem_1fr_4.5rem] dark:hover:bg-medical-surface-alt/60"
+              >
+                <div class="min-w-0">
+                  <span class="block truncate text-sm font-bold text-slate-700 group-hover:text-cyan-700 dark:text-slate-200 dark:group-hover:text-cyan-300">
+                    {d.name}
+                  </span>
+                  <span class="block truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    {d.en} · {d.cls}
+                  </span>
+                </div>
+                <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-medical-surface-alt" aria-hidden="true">
+                  <div class="h-full rounded-full bg-cyan-600" style={`width:${d.bar}%`} />
+                </div>
+                <span class="justify-self-end font-mono text-sm font-bold text-cyan-700 dark:text-cyan-300">
+                  {d.kiText}
+                </span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 临床实战 Q&A -->
+    <section class="mt-10" aria-label="临床实战问答">
+      <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">临床实战问答</h2>
+      <div class="space-y-3">
+        <article class="rounded-xl border border-slate-200 bg-white p-5 dark:border-medical-line dark:bg-medical-surface">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <span class="flex items-start gap-2">
+              <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500 text-[11px] font-black text-white" aria-hidden="true">Q</span>
+              <span>为什么阻断 5-HT<sub>2A</sub> 反而能减少抗精神病药引起的锥体外系反应（EPS）？</span>
+            </span>
+          </h3>
+          <div class="mt-2 space-y-2 pl-7 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+            <p>
+              关键在黑质-纹状体通路的生理调控：纹状体多巴胺神经元的突触前末梢上分布着 5-HT<sub>2A</sub> 受体，生理状态下 5-HT 与之结合会直接抑制多巴胺释放——相当于踩着刹车。
+            </p>
+            <p>
+              SGA 阻断 5-HT<sub>2A</sub> 等于松开刹车，局部多巴胺释放增多，与被药物占据的 D<sub>2</sub> 受体形成竞争性置换，使 D<sub>2</sub> 有效占有率回落到致 EPS 阈值（约 78%–80%）以下，从而保全运动功能。
+            </p>
+          </div>
+        </article>
+        <article class="rounded-xl border border-slate-200 bg-white p-5 dark:border-medical-line dark:bg-medical-surface">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <span class="flex items-start gap-2">
+              <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500 text-[11px] font-black text-white" aria-hidden="true">Q</span>
+              <span>致幻剂同样作用于 5-HT<sub>2A</sub>，为什么抗精神病药不会致幻？</span>
+            </span>
+          </h3>
+          <div class="mt-2 space-y-2 pl-7 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+            <p>
+              区别不在「结合谁」，而在「干预模式」：LSD、裸盖菇素是完全激动剂，驱使皮层锥体细胞过量释放谷氨酸，产生感知扭曲；治疗药物则是拮抗剂或反向激动剂，占据受体但不激活，反而压制谷氨酸通路的过度信号。同一受体，干预模式不同，临床结局可以完全相反。
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</Base>

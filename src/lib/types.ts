@@ -1,20 +1,4 @@
-export type ReceptorAction =
-  | 'agonist'
-  | 'partial_agonist'
-  | 'antagonist'
-  | 'inverse_agonist'
-  | 'pam'
-  | 'nam';
-
-export interface ReceptorBinding {
-  label: string;
-  value: number;
-  action?: ReceptorAction;
-  link_id?: string;
-}
-
 export interface StahlRadarData {
-  bindings?: ReceptorBinding[];
   labels?: string[];
   values?: number[];
   link_ids?: string[];
@@ -67,6 +51,19 @@ export interface PrincipleData {
   subtitle?: string;
   description?: string;
   visual_guide?: string;
+  receptor_info?: {
+    receptor_type: string;
+    type_note?: string;
+    synapse: string;
+    synapse_note?: string;
+    ligand: string;
+    ligand_note?: string;
+    brain_regions: string;
+    regions_note?: string;
+    interventions?: { mode: string; effect: string; clinic: string; drugs?: string[] }[];
+    target_drugs?: { name: string; ki: string; note?: string }[];
+    qa?: { q: string; a: string }[];
+  };
 }
 
 export interface TocItem {

@@ -34,12 +34,25 @@ const { title, description = '精神科药物、受体与生物学假说的临�
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.cn" />
+    <link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin />
+    <!-- 字体源用 Google 官方中国端点（fonts.googleapis.cn / fonts.gstatic.cn）：
+         与 .com 一样走运营商内部缓存节点，但 .cn 是专门面向大陆的端点，
+         对移动蜂窝网络的兼容更稳妥。仍然异步加载（media=print 技巧）：
+         字体源万一不可达时只是回退系统字体，页面照常秒开，绝不阻塞。
+         字重只保留全站实际用到的（Inter 400-700、Noto Serif SC 700/900），减少下载量 -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap"
+      href="https://fonts.googleapis.cn/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@700;900&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.cn/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@700;900&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <ClientRouter />
     <script is:inline>
       // 主题 + 版面宽度：首屏无闪烁；View Transitions 换页后 html 属性会被重建，需要重新应用
@@ -148,6 +161,8 @@ const { title, description = '精神科药物、受体与生物学假说的临�
         // 本页签内发生过站内路由导航（含 View Transitions 与雷达图等程序化跳转），
         // 则 history.back() 一定落在本站内；直接打开/外站来路则退回首页。
         let internalNav = false;
+        // 宽窄切换过渡的收尾定时器（pp-width-anim 类加在 <html> 上，动画结束即移除）
+        let widthAnimTimer;
         document.addEventListener('astro:after-swap', () => {
           internalNav = true;
         });
@@ -219,15 +234,23 @@ const { title, description = '精神科药物、受体与生物学假说的临�
             const fromDepth =
               !!link.closest('.wiki') ||
               !!link.closest('[aria-label="临床实战笔记"]') ||
-              !!link.closest('[aria-label="药代动力学速览"]');
+              !!link.closest('[aria-label="药代动力学速览"]') ||
+              !!link.closest('[data-depth-nav]');
             const last = stack[stack.length - 1];
             if (last && last.p === dest) last.d = fromDepth;
             else stack.push({ p: dest, d: fromDepth });
             writeStack(stack);
           }
           if (target.closest('[data-width-toggle]')) {
-            const next = document.documentElement.dataset.ppWidth === 'narrow' ? 'wide' : 'narrow';
-            document.documentElement.dataset.ppWidth = next;
+            const root = document.documentElement;
+            const next = root.dataset.ppWidth === 'narrow' ? 'wide' : 'narrow';
+            // 仅在点击切换这一次启用 max-width 过渡（pp-width-anim 由下方定时移除）：
+            // 直接把 transition 常驻在 .entry-shell 上，View Transitions 换页重设
+            // data-pp-width 时也会误触发一次伸展动画
+            root.classList.add('pp-width-anim');
+            clearTimeout(widthAnimTimer);
+            widthAnimTimer = setTimeout(() => root.classList.remove('pp-width-anim'), 550);
+            root.dataset.ppWidth = next;
             localStorage.setItem('pp-width', next);
             return;
           }

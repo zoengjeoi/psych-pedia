@@ -5,7 +5,7 @@
  * 视觉锚点是词条头的大号 serif 药名；等宽字体只留给真实实验数值。
  */
 import type { CollectionEntry } from 'astro:content';
-import RadarViz from './islands/RadarViz';
+import RadarChart from './RadarChart.astro';
 import { drugCategories } from '../lib/entries';
 import { renderWiki } from '../lib/markdown';
 import type { Pearl, WikiPattern } from '../lib/types';
@@ -14,22 +14,23 @@ interface Props {
   entry: CollectionEntry<'drugs'>;
   wiki: { html: string; toc: import('../lib/types').TocItem[] };
   patterns: WikiPattern[];
+  /** 全站有效词条 id 白名单（内链守卫） */
+  validIds?: Set<string> | null;
 }
 
-const { entry, wiki, patterns } = Astro.props;
+const { entry, wiki, patterns, validIds } = Astro.props;
 const drug = entry.data;
 const categories = drugCategories(entry);
 const dosageForms = drug.pk_data?.dosage_forms ?? [];
 const primaryHalfLife = dosageForms[0]?.half_life ?? drug.pk_data?.half_life ?? '—';
 const otherForms = dosageForms.slice(1);
 const hasRadar = Boolean(
-  drug.stahl_radar?.bindings?.length ||
-    (drug.stahl_radar?.labels?.length && drug.stahl_radar?.values?.length)
+  drug.stahl_radar?.labels?.length && drug.stahl_radar?.values?.length
 );
 
 // 实战笔记同样走渲染管线，让笔记里的受体术语可跳转
 const pearlsHtml = await Promise.all(
-  drug.pearls.map((p) => renderWiki(p.content, patterns))
+  drug.pearls.map((p) => renderWiki(p.content, patterns, validIds))
 );
 
 const PEARL_STYLES: Record<
@@ -190,7 +191,7 @@ const PK_LABEL = 'text-[11px] font-semibold tracking-widest text-slate-400 upper
               结合强度 0–10，点击靶点名称可跳转对应词条
             </p>
             <div class="h-72 sm:h-96">
-              <RadarViz client:visible data={drug.stahl_radar!} />
+              <RadarChart data={drug.stahl_radar!} validIds={validIds} />
             </div>
           </section>
         )}

@@ -1,0 +1,299 @@
+---
+/**
+ * 靶点雷达图（服务端直出 SVG，零客户端依赖）。
+ * 替代原 recharts 岛屿：图形随 HTML 首屏到达，不再等 368KB JS 下载与水合后才绘制；
+ * 明暗适配走纯 CSS（html.dark 祖先选择器），tooltip 由文档级委托脚本完成，换页后依然生效。
+ */
+import type { StahlRadarData } from '../lib/types';
+
+interface Props {
+  data: StahlRadarData;
+  /** 全站有效词条 id 白名单：link_id 不在名单内时标签降级为纯文本（防 404） */
+  validIds?: Set<string> | null;
+}
+
+/** 与原 recharts 版一致的标签修正（Na+Channel → Na⁺通道 等） */
+const formatLabel = (label: string) =>
+  label
+    .replace(/Na\+Channel/gi, 'Na⁺通道')
+    .replace(/Ca2\+Channel/gi, 'Ca²⁺通道')
+    .replace(/Ca\+Channel/gi, 'Ca²⁺通道')
+    .replace(/Channel/gi, '通道');
+
+const { data, validIds } = Astro.props;
+
+const bindings = (data.labels ?? [])
+  .map((label, i) => ({
+    label,
+    value: (data.values ?? [])[i],
+    linkId: (data.link_ids ?? [])[i] ?? '',
+  }))
+  .filter((b) => typeof b.value === 'number');
+
+const N = bindings.length;
+// 几何：首轴指向正上方、顺时针排布；R 为值=10 的半径，网格 4 层（2.5/5/7.5/10）
+const R = 100;
+const RINGS = [2.5, 5, 7.5, 10];
+const angleOf = (i: number) => ((-90 + (360 * i) / N) * Math.PI) / 180;
+const point = (i: number, v: number) => ({
+  x: Math.cos(angleOf(i)) * ((v / 10) * R),
+  y: Math.sin(angleOf(i)) * ((v / 10) * R),
+});
+
+// 视图留白：轴半径 + 标签间距 + 最长标签宽度（CJK≈12px、拉丁≈7px @ 12px 字号）
+const labelWidth = (s: string) =>
+  [...s].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x2e80 ? 12 : 7), 0);
+const maxLabelW = Math.max(...bindings.map((b) => labelWidth(formatLabel(b.label))));
+const C = R + 18 + maxLabelW / 2;
+const S = C * 2;
+
+const fmt = (n: number) => (Math.round(n * 10) / 10).toString();
+const at = (i: number, v: number) => {
+  const p = point(i, v);
+  return `${fmt(C + p.x)},${fmt(C + p.y)}`;
+};
+const ringPoints = RINGS.map((v) => bindings.map((_, i) => at(i, v)).join(' '));
+const shapePoints = bindings.map((b, i) => at(i, b.value)).join(' ');
+
+// 标签定位：水平按方位选择对齐（右侧 start / 左侧 end / 上下 middle），纵向按象限微调基线
+const labelPos = (i: number) => {
+  const deg = ((-90 + (360 * i) / N) + 360) % 360;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const anchor = cos > 0.25 ? 'start' : cos < -0.25 ? 'end' : 'middle';
+  const dy = sin > 0.25 ? '0.9em' : sin < -0.25 ? '-0.35em' : '0.35em';
+  const p = point(i, 10);
+  return { x: fmt(C + p.x + cos * 10), y: fmt(C + p.y + sin * 10), anchor, dy };
+};
+---
+
+<figure class="pp-radar">
+  <svg
+    viewBox={`0 0 ${fmt(S)} ${fmt(S)}`}
+    role="img"
+    aria-label={`受体亲和力雷达图：${bindings.map((b) => formatLabel(b.label)).join('、')}`}
+    data-depth-nav
+    preserveAspectRatio="xMidYMid meet"
+  >
+    {
+      ringPoints.map((pts) => (
+        <polygon class="pp-radar-grid" points={pts} />
+      ))
+    }
+    {
+      bindings.map((_, i) => {
+        const p = point(i, 10);
+        return <line class="pp-radar-grid" x1={fmt(C)} y1={fmt(C)} x2={fmt(C + p.x)} y2={fmt(C + p.y)} />;
+      })
+    }
+    <polygon class="pp-radar-shape" points={shapePoints} />
+    {
+      bindings.map((b, i) => {
+        const pos = labelPos(i);
+        const linked = Boolean(b.linkId) && (!validIds || validIds.has(b.linkId));
+        const text = (
+          <text
+            class={`radar-tick-label pp-radar-label ${b.linkId && linked ? '' : 'pp-radar-label-plain'}`}
+            x={pos.x}
+            y={pos.y}
+            text-anchor={pos.anchor}
+            dy={pos.dy}
+          >
+            {formatLabel(b.label)}
+          </text>
+        );
+        const dot = (
+          <circle
+            class="pp-radar-dot"
+            cx={fmt(C + point(i, b.value).x)}
+            cy={fmt(C + point(i, b.value).y)}
+            r="12"
+            data-label={formatLabel(b.label)}
+            data-value={b.value}
+          />
+        );
+        return b.linkId && linked ? (
+          <a href={`/${b.linkId}`}>
+            {text}
+            {dot}
+          </a>
+        ) : (
+          <g>
+            {text}
+            {dot}
+          </g>
+        );
+      })
+    }
+  </svg>
+</figure>
+
+<style is:global>
+  .pp-radar {
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+  .pp-radar svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+  }
+  .pp-radar-grid {
+    fill: none;
+    stroke: #e2e8f0;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+  .dark .pp-radar-grid {
+    stroke: #334155;
+  }
+  .pp-radar-shape {
+    fill: rgba(14, 165, 233, 0.12);
+    stroke: #0284c7;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    /* 入场动画：以雷达圆心为基准从 0 舒展到全尺寸（对齐原 recharts 版的入场趣味）。
+       transform-box: view-box 让 transform-origin: center 恰好落在圆心 (S/2, S/2)；
+       non-scaling-stroke 让舒展过程中描边不随缩放变粗，始终是真实像素 2.5px */
+    transform-box: view-box;
+    transform-origin: center;
+    animation: pp-radar-grow 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+  }
+  @keyframes pp-radar-grow {
+    from {
+      transform: scale(0);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+  .dark .pp-radar-shape {
+    fill: rgba(14, 165, 233, 0.18);
+    stroke: #0ea5e9;
+  }
+  .pp-radar-label {
+    fill: #475569;
+    font-family: system-ui, -apple-system, sans-serif;
+    transition: fill 0.2s;
+  }
+  .dark .pp-radar-label {
+    fill: #94a3b8;
+  }
+  /* 标签字号不随 SVG 等比放大：容器高手机 288px(h-72)、桌面 384px(h-96)，
+     同一 viewBox 在桌面被放大约 1.4 倍。按断点反向补偿 12→9（12×288 = 9×384），
+     两端实际渲染字号一致，对齐原 recharts 版「文字恒为 12px 实际像素」的行为。
+     断点 40rem 与 DrugArticle.astro 容器 h-72 sm:h-96（Tailwind sm）联动 */
+  .pp-radar .pp-radar-label {
+    font-size: 12px;
+  }
+  @media (min-width: 40rem) {
+    .pp-radar .pp-radar-label {
+      font-size: 9px;
+    }
+  }
+  .pp-radar-label-plain {
+    cursor: default;
+  }
+  /* 标签悬停变青：全局 .radar-tick-label:hover 与 .dark 填色同特异性、次序不定，
+     这里用更高特异性锁定（仅限可点击的链接标签），明暗两版都是青色 */
+  .pp-radar a:hover .radar-tick-label,
+  .pp-radar a:hover .radar-tick-label:hover,
+  .dark .pp-radar a:hover .radar-tick-label {
+    fill: #0ea5e9;
+  }
+  /* 顶点命中区：透明圆，供 tooltip 委托脚本定位 */
+  .pp-radar-dot {
+    fill: transparent;
+  }
+
+  /* tooltip：脚本动态挂到 body 上（组件作用域样式覆盖不到，须全局） */
+  .pp-radar-tip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 50;
+    max-width: 16rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .dark .pp-radar-tip {
+    border-color: #334155;
+    background: #1e293b;
+  }
+  .pp-radar-tip-name {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  .dark .pp-radar-tip-name {
+    color: #f1f5f9;
+  }
+  .pp-radar-tip-val {
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    color: #0891b2;
+  }
+  .dark .pp-radar-tip-val {
+    color: #22d3ee;
+  }
+  .pp-radar-tip-val b {
+    font-family: ui-monospace, 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+</style>
+
+<script>
+  // 雷达图顶点悬停提示：文档级委托，View Transitions 换页后无需重新绑定。
+  // 脚本由 Astro 打包去重，每个会话只执行一次。
+  const tip = document.createElement('div');
+  tip.className = 'pp-radar-tip';
+  tip.setAttribute('aria-hidden', 'true');
+
+  let hideTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const show = (dot: Element) => {
+    if (hideTimer) clearTimeout(hideTimer);
+    const label = dot.getAttribute('data-label') ?? '';
+    const value = Number(dot.getAttribute('data-value') ?? 0);
+    tip.innerHTML =
+      `<p class="pp-radar-tip-name"></p>` +
+      `<p class="pp-radar-tip-val">亲和力: <b>${value.toFixed(1)}</b></p>`;
+    tip.querySelector('.pp-radar-tip-name')!.textContent = label;
+    if (!tip.isConnected) document.body.appendChild(tip);
+
+    // 定位：顶点上方居中；贴顶（顶栏 h-16）或左右出界时收拢
+    const rect = dot.getBoundingClientRect();
+    tip.style.opacity = '1';
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+    let x = rect.left + rect.width / 2 - tw / 2;
+    x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+    let y = rect.top - th - 10;
+    if (y < 68) y = rect.bottom + 10;
+    tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  };
+
+  const hide = () => {
+    hideTimer = setTimeout(() => {
+      tip.style.opacity = '0';
+    }, 80);
+  };
+
+  document.addEventListener('mouseover', (e) => {
+    const dot = e.target instanceof Element ? e.target.closest('.pp-radar-dot') : null;
+    if (dot) show(dot);
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target instanceof Element && e.target.closest('.pp-radar-dot')) hide();
+  });
+</script>
