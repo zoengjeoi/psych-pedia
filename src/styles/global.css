@@ -301,6 +301,11 @@ html:has([data-sidebar-panel].collapsed) .pp-toc-panel {
   color: #64748b;
 }
 
+/* 松散列表修正：li 内的段落转行内，避免 list-inside 的序号/圆点被块级子元素挤到单独一行 */
+.wiki li > p {
+  display: inline;
+}
+
 /* ---------- 正文内的状态图标（替代 ✅ / ❌ emoji） ---------- */
 .emoji-icon {
   height: 1.05em;

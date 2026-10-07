@@ -49,7 +49,7 @@ market_info:
   insurance: "乙类医保"
   pregnancy: "C类"
 categories:
-  - "α2肾上腺素受体激动剂"
+  - "α2受体激动剂"
 ---
 
 # 右美托咪定 (Dexmedetomidine)

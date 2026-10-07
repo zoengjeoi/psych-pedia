@@ -49,8 +49,9 @@ market_info:
   insurance: "乙类医保 [需核实]"
   pregnancy: "B类"
 categories:
-  - "α2肾上腺素受体激动剂"
+  - "α2受体激动剂"
   - "抗高血压药"
+  - "ADHD 非兴奋剂"
 ---
 
 # 胍法辛 (Guanfacine)
