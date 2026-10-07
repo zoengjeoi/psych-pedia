@@ -6,26 +6,38 @@
  * 重写正文时 frontmatter 逐字保留（写盘前自动备份到 v2/.backups/）。
  *
  * 用法：
- *   npm run generate -- <药物id> [<药物id> ...]     重写指定词条的正文
+ *   npm run generate -- <药物id> [<药物id> ...]     重写指定词条的正文（frontmatter 保留）
  *   npm run generate -- --all                        补齐正文缺失/不完整的词条（跳过完整的）
  *   npm run generate -- --all --force                全部重写
- *   npm run generate -- --new 中文名 [英文名]         AI 新建整条词条（frontmatter + 正文）
+ *   npm run generate -- --new 中文名 [英文名]         AI 新建整条药物词条（frontmatter + 正文）
+ *   npm run generate -- --new 名1 名2 名3             一次新建/覆盖多个词条（英文名由 AI 推断）
+ *   npm run generate -- --new 阿立哌唑 --force        同名词条整体覆盖重写（frontmatter+正文，旧文件自动备份）
+ *   npm run generate -- --receptor 受体名 [--id=xx]    AI 新建/覆盖受体词条（结构化 frontmatter + 自由正文）
+ *                                                     关联药物自动从现有药物库校验回填（点击可跳转词条）
  *
  * 选项：
  *   --dry-run       只打印生成结果与校验结论，不写盘
  *   --mock[=变体]   不调用 API，用内置样例走完整流程（good|bad|short|latex；自测用）
  *   --lenient       校验不通过时仍然写盘（默认拒绝写盘）
  *   --yes           跳过确认（供批处理脚本调用）
+ *   --force          --new 模式下：同名词条整体覆盖重写（旧文件备份到 .backups/）
  *   --delay=3000    每个词条之间的间隔毫秒数（默认 3000）
  *   --model=xxx     覆盖模型（也可用 .env 的 GEMINI_MODEL）
  *   --id=xxx        新建模式：显式指定词条 id
+ *
+ * .env 可配置项（词条生成相关）：
+ *   GEMINI_API_KEY        密钥（只在本脚本进程内使用，任何 AI/第三方都接触不到）
+ *   GEMINI_MODEL          生成模型（默认 gemini-3.8-flash）
+ *   GEMINI_BASE_URL       可选，Gemini 兼容中转地址（SDK httpOptions.baseUrl）
+ *   GEMINI_TEMPERATURE    可选，采样温度（默认 0.15；要更稳可设 0-0.1）
+ *   GEMINI_REVIEW_MODEL   可选，审稿模型（双 AI 流水线：生成 → 审稿挑刺 → 回喂修复一轮）
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { loadEnv } from './image-upload-lib.mjs';
-import { drugSchema } from '../src/lib/content-schema.mjs';
+import { drugSchema, principleSchema } from '../src/lib/content-schema.mjs';
 import { DRUG_CATEGORY_ORDER } from '../src/lib/taxonomy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -39,6 +51,15 @@ const API_KEY = process.env.GEMINI_API_KEY || '';
 // 默认用 flash：实测（阿米替林/托莫西汀对照 pro）结构、表格、行文风格已对齐现有词条，
 // 单次约 40-50s（pro 约 68s），单价更低。需要更深内容时可用 --model=gemini-3.1-pro-preview 或改 .env。
 const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// 可选：Gemini 兼容中转/代理地址（SDK 的 httpOptions.baseUrl）。留空 = 直连 Google 官方
+const BASE_URL = process.env.GEMINI_BASE_URL || '';
+// 采样温度（默认 0.15；追求更稳定的输出可在 .env 调到 0-0.1）
+const TEMPERATURE = Number.isFinite(Number(process.env.GEMINI_TEMPERATURE))
+  ? Number(process.env.GEMINI_TEMPERATURE)
+  : 0.15;
+// 可选：审稿模型（双 AI 流水线——生成模型写完后由它挑刺，问题回喂给生成模型修复一轮）。
+// 留空 = 只用程序化校验（章节结构/字数/雷达图绑定等）。设置后审核模型也看不到任何密钥，密钥只在本脚本进程内使用
+const REVIEW_MODEL = process.env.GEMINI_REVIEW_MODEL || '';
 
 const SECTIONS = [
   '## 概况',
@@ -66,6 +87,7 @@ function parseArgs(argv) {
     all: false,
     force: false,
     newEntry: false,
+    receptorEntry: false,
     dryRun: false,
     dump: false,
     lenient: false,
@@ -80,6 +102,7 @@ function parseArgs(argv) {
     if (arg === '--all') opts.all = true;
     else if (arg === '--force') opts.force = true;
     else if (arg === '--new') opts.newEntry = true;
+    else if (arg === '--receptor') opts.receptorEntry = true;
     else if (arg === '--dry-run') opts.dryRun = true;
     else if (arg === '--dump') opts.dump = true;
     else if (arg === '--lenient') opts.lenient = true;
@@ -212,7 +235,27 @@ ${existingBody ? `\n**现有内容（供参考，可保留其中准确的部分�
 | 稳态时间 | ... | ... |
 
 ## 药物机制
-受体结合谱（受体名用 HTML 下标：5-HT<sub>2A</sub>、D<sub>2</sub>、H<sub>1</sub> 等）、作用机制、与疗效/副作用的关联。（约 300-500 字）
+受体结合谱（受体名用 HTML 下标：5-HT<sub>2A</sub>、D<sub>2</sub>、H<sub>1</sub> 等）、作用机制、与疗效/副作用的关联。
+
+**本章节开头先放「受体结合谱 Ki 表格」，再写机制叙述**。表格必须**受体做列头、指标做行**（只占 3 行，紧凑优先）：
+
+### 受体结合谱（Ki）
+
+| 受体 | D<sub>2</sub> | 5-HT<sub>2A</sub> | 5-HT<sub>7</sub> | … |
+|------|------|------|------|------|
+| Ki (nM) | 0.34 | 26 | 39 | … |
+| 作用类型 | 部分激动 | 拮抗 | 弱拮抗 | … |
+
+- 覆盖正文与雷达图讨论到的**全部受体**，按临床意义从左到右排序，**最多 10 个**（其余受体在叙述文字中补充，不要把表格挤得过宽）；
+- Ki 采用体外受体结合实验的公开文献值（如 PDSP 数据库、药品说明书），保留 1-2 位有效数字，单位 nM；
+- 无可靠公开数据的受体**必须照样列出**：Ki 填「无数据」，作用类型按已知药理学填写或「无数据」，**严禁编造数值**；
+- 把握不足的数值加 [需核实]。
+
+表格下方**紧跟**这一行灰色小字注释（HTML 逐字照用，分级阈值不得改动）：
+
+<p class="ki-note">注：K<sub>i</sub> 为解离常数，数值越小亲和力越强——小于 1 nM 为极高亲和力，1–10 nM 为高，10–100 nM 为中等，100–1000 nM 为低，大于 1000 nM 通常无实际结合意义；「无数据」表示暂无可靠的实验室公开数据。作用类型指药物在受体的内在活性：完全激动、部分激动、拮抗、反向激动等。</p>
+
+然后是机制叙述（约 300-500 字）：受体结合谱如何转化为疗效与副作用、各受体的激动/拮抗与临床表现的关联。
 
 ## 代谢途径和药物相互作用
 
@@ -288,7 +331,7 @@ const buildFrontmatterPrompt = ({ nameCn, nameEn, principleIds }) => `你是精�
   "categories": ["从下面【分类清单】中逐字选取 1-3 个"],
   "tags": ["3-5 个中文短标签，如 镇静、低EPS、代谢友好"],
   "stahl_radar": {
-    "labels": ["5-7 个药理靶点，如 D2、5HT2A、H1、NET"],
+    "labels": ["4-8 个药理靶点——覆盖该药临床上重要的全部主要受体，不要只挑最著名的几个；α1、5HT7、M1 等结合显著的靶点也应纳入"],
     "values": [与 labels 一一对应的 0-10 数字（10 = 亲和力最高）],
     "link_ids": [与 labels 一一对应的受体 id，只能取下面的【受体 id 清单】]
   },
@@ -316,6 +359,7 @@ ${Array.from(principleIds).sort().join(', ')}
 
 要求：
 - pearls 3-4 条，类型分布合理（至少 1 条 danger 或 warning）。
+- 靶点选择以 Stahl 受体结合谱为准：凡亲和力或临床意义显著的受体都应纳入，包括 α1、5HT7 这类常被忽略的靶点（上限 8 个，按临床意义排序）。
 - 靶点亲和力请依据 Stahl 受体结合谱；把握不大的数值给 0-10 的合理估计，不要留空。
 - 任何无法确证的精确数值用 "[需核实]" 标注，不要编造。
 - 只输出 JSON 本身。`;
@@ -328,6 +372,7 @@ ${errors.map((e) => `- ${e}`).join('\n')}
 
 **硬性要求（再强调）**：
 - 必须包含且仅包含以下 9 个章节，标题逐字一致、顺序一致：${SECTIONS.join(' / ')}
+- 药物机制章节开头的受体 Ki 表格，与其下方 <p class="ki-note"> 注释行必须保留（若上一稿包含）
 - 纯 Markdown；禁止 LaTeX（$ 或 $$）；禁止代码围栏（\`\`\`）；禁止一级标题（# ）
 - 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）
 - 总字数 2500-3500 字
@@ -344,7 +389,10 @@ ${previous.slice(0, 6000)}`;
 
 async function callGemini(prompt, { json = false, model } = {}) {
   const { GoogleGenAI } = await import('@google/genai');
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({
+    apiKey: API_KEY,
+    ...(BASE_URL ? { httpOptions: { baseUrl: BASE_URL } } : {}),
+  });
   let lastError;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
@@ -353,7 +401,7 @@ async function callGemini(prompt, { json = false, model } = {}) {
         model,
         contents: prompt,
         config: {
-          temperature: 0.15,
+          temperature: TEMPERATURE,
           topP: 0.8,
           maxOutputTokens: 24000,
           ...(json ? { responseMimeType: 'application/json' } : {}),
@@ -404,6 +452,22 @@ const parseJsonBlock = (text) => {
 /* 校验                                                                */
 /* ------------------------------------------------------------------ */
 
+/** 审稿提示（双 AI 流水线）：由审稿模型挑出真问题，回喂给生成模型修复 */
+const buildReviewPrompt = ({ data, body }) => `你是资深精神科临床药师，正在审阅本站词条《${data.name_cn}（${data.name_en}）》的正文草稿。
+
+只挑真问题，不吹毛求疵。审阅重点：
+1. 内部矛盾：正文与关键参数（如半衰期 ${data.pk_data?.half_life ?? '—'}、蛋白结合率 ${data.pk_data?.protein_binding ?? '—'}）互相打架；
+2. 剂量红线：出现超过该药已知最大剂量的推荐、或明显错误的给药途径；
+3. 事实硬伤：受体/机制描述与该药已知药理学明显冲突；
+4. 与既有临床共识严重相悖且未加 [需核实] 标注的表述。
+
+输出**严格的 JSON**（不要代码块）：{"issues": ["具体问题（指出位置与建议改法）", ...]}
+没有问题就输出 {"issues": []}。最多 5 条，按严重程度排序。
+
+--- 正文开始 ---
+${body.slice(0, 12000)}
+--- 正文结束 ---`;
+
 /**
  * 规整模型输出：拆掉整篇代码围栏包装、剔除一级标题（站点的词条名标题单独渲染，
  * 正文里的 h1 会被渲染管线丢弃，这里直接清理，避免白白浪费一次生成）。
@@ -449,7 +513,7 @@ function validateBody(text) {
   return { errors, warnings, ok: errors.length === 0 };
 }
 
-function validateNewEntry(data, { principleIds, existingIds, id }) {
+function validateNewEntry(data, { principleIds, existingIds, id, allowExisting = false }) {
   const issues = [];
   if (!data || typeof data !== 'object') return ['模型返回的不是 JSON 对象'];
   const radar = data.stahl_radar ?? {};
@@ -478,7 +542,7 @@ function validateNewEntry(data, { principleIds, existingIds, id }) {
   });
   if (!data.pk_data || typeof data.pk_data !== 'object') issues.push('缺少 pk_data');
   if (!data.name_en) issues.push('缺少 name_en');
-  if (existingIds.has(id)) issues.push(`词条 id "${id}" 已存在（与现有词条或受体重名）`);
+  if (!allowExisting && existingIds.has(id)) issues.push(`词条 id "${id}" 已存在（与现有词条或受体重名）`);
   return issues;
 }
 
@@ -540,6 +604,41 @@ async function generateBodyChecked({ entry, reference, referenceFull, opts }) {
       console.log('   ↻ 修复未改善，保留首次输出');
     }
   }
+
+  // 双 AI 审稿（可选，.env 设 GEMINI_REVIEW_MODEL 启用）：
+  // 审稿模型挑出的问题回喂给生成模型修复一轮，修复后再过一次程序校验
+  if (verdict.ok && REVIEW_MODEL && !opts.mock && REVIEW_MODEL !== opts.model) {
+    try {
+      console.log(`   🔍 审稿模型（${REVIEW_MODEL}）复核中…`);
+      const reviewRaw = await callGemini(buildReviewPrompt({ data: entry.data, body: normalized.text }), {
+        json: true,
+        model: REVIEW_MODEL,
+      });
+      const review = parseJsonBlock(reviewRaw);
+      const issues = Array.isArray(review?.issues) ? review.issues.filter((s) => typeof s === 'string' && s.trim()) : [];
+      if (!issues.length) {
+        console.log('   ✅ 审稿通过，无需修改');
+      } else {
+        issues.forEach((it, i) => console.log(`   💬 审稿意见 ${i + 1}：${it}`));
+        console.log('   ↻ 按审稿意见发起修复…');
+        const fixedRaw = await callGemini(
+          buildRepairPrompt({ data: entry.data, previous: normalized.text, errors: issues }),
+          { model: opts.model }
+        );
+        const fixed = normalizeBody(fixedRaw);
+        const fixedVerdict = validateBody(fixed.text);
+        if (fixedVerdict.ok || fixedVerdict.errors.length <= verdict.errors.length) {
+          normalized = fixed;
+          verdict = fixedVerdict;
+          console.log(`   ↻ 审稿修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
+        } else {
+          console.log('   ↻ 审稿修复未改善，保留审稿前版本');
+        }
+      }
+    } catch (error) {
+      console.log(`   ⚠️ 审稿环节失败（不影响出稿）：${String(error?.message ?? error).slice(0, 70)}`);
+    }
+  }
   return { ...normalized, verdict };
 }
 
@@ -594,23 +693,40 @@ async function runRewrite(targets, entries, reference, referenceFull, opts) {
   return results;
 }
 
-async function runNew(opts, principleIds, existingIds, reference, referenceFull) {
-  const [nameCn, nameEnArg] = opts.positional;
-  if (!nameCn) {
-    console.error('❌ --new 模式需要提供中文名：npm run generate -- --new 中文名 [英文名]');
-    return [{ id: '(new)', ok: false, error: '缺少中文名' }];
+/** 解析 --new 的名字列表。
+ *  支持两种写法（可混用不了——按顺序扫描）：
+ *    --new 名1 名2 名3                一次新建多个词条，英文名由 AI 推断
+ *    --new 中文名 英文名              成对传入（第二个参数为纯拉丁字母时视为英文名）
+ *  旧版把第二个位置参数无条件当英文名，用户输入「名1 名2 名3」时会把名2 吞成英文名，
+ *  而中文无法 slugify 出合法 id，最终写出了隐藏文件 drugs/.md（Astro 忽略点文件，词条永不见效）。
+ */
+function parseNewNames(positional) {
+  const jobs = [];
+  for (let i = 0; i < positional.length; i++) {
+    const cur = positional[i];
+    const next = positional[i + 1];
+    if (next && /^[A-Za-z][A-Za-z0-9 .-]*$/.test(next)) {
+      jobs.push({ nameCn: cur, nameEn: next });
+      i += 1;
+    } else {
+      jobs.push({ nameCn: cur, nameEn: '' });
+    }
   }
-  console.log(`\n🆕 新建词条：${nameCn}${nameEnArg ? ` / ${nameEnArg}` : ''}`);
+  return jobs;
+}
+
+async function generateNewEntry({ nameCn, nameEn }, opts, principleIds, existingIds, reference, referenceFull) {
+  console.log(`\n🆕 新建词条：${nameCn}${nameEn ? ` / ${nameEn}` : ''}`);
 
   // 1) frontmatter（结构化 JSON）
   let fm;
   if (opts.mock) {
     fm = JSON.parse(JSON.stringify(matter(fs.readFileSync(path.join(DRUGS_DIR, 'clozapine.md'), 'utf-8')).data));
-    fm.name_en = nameEnArg || fm.name_en;
+    fm.name_en = nameEn || fm.name_en;
     fm.id = undefined;
   } else {
     const raw = await callGemini(
-      buildFrontmatterPrompt({ nameCn, nameEn: nameEnArg, principleIds }),
+      buildFrontmatterPrompt({ nameCn, nameEn, principleIds }),
       { json: true, model: opts.model }
     );
     try {
@@ -621,12 +737,19 @@ async function runNew(opts, principleIds, existingIds, reference, referenceFull)
     }
   }
 
-  const id = opts.id || slugifyId(nameEnArg || fm.name_en || nameCn);
+  // id 推导优先级：显式 --id > 模型返回的英文名 > 命令行英文名。
+  // 千万不能用中文名兜底——中文 slugify 后为空，会写出隐藏文件 drugs/.md。
+  const id = opts.id || slugifyId(fm.name_en || nameEn || '');
+  if (!id) {
+    console.error(`   ❌ 无法为「${nameCn}」推导出合法词条 id（需要英文名）。`);
+    console.error(`      请改用：npm run generate -- --new ${nameCn} 英文名  或  --id=自定义id`);
+    return [{ id: nameCn, ok: false, error: '无法推导词条 id（缺英文名）' }];
+  }
   // 注意展开顺序：id / name_cn 必须由我们决定，不能被模型返回的同名字段覆盖
   const data = { ...fm, id, name_cn: nameCn };
 
   // 2) 校验
-  const issues = validateNewEntry(data, { principleIds, existingIds, id });
+  const issues = validateNewEntry(data, { principleIds, existingIds, id, allowExisting: opts.force });
   const parsed = drugSchema.safeParse(data);
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
@@ -661,12 +784,229 @@ async function runNew(opts, principleIds, existingIds, reference, referenceFull)
   }
   const file = path.join(DRUGS_DIR, `${id}.md`);
   if (fs.existsSync(file)) {
-    console.error(`   ❌ 文件已存在：${path.relative(ROOT, file)}（如需重写正文请用：npm run generate -- ${id}）`);
-    return [{ id, ok: false, error: '文件已存在' }];
+    if (!opts.force) {
+      console.error(`   ❌ 文件已存在：${path.relative(ROOT, file)}（整体覆盖重写请加 --force，正文-only 重写请用：npm run generate -- ${id}）`);
+      return [{ id, ok: false, error: '文件已存在' }];
+    }
+    const backupPath = backup(file);
+    fs.writeFileSync(file, content, 'utf-8');
+    console.log(`   ♻️  已覆盖重写 src/content/drugs/${id}.md（正文 ${text.length} 字；旧文件备份 ${backupPath}）`);
+    return [{ id, ok: true, length: text.length, overwritten: true }];
   }
   fs.writeFileSync(file, content, 'utf-8');
   console.log(`   ✅ 已创建 src/content/drugs/${id}.md（正文 ${text.length} 字）`);
   return [{ id, ok: true, length: text.length }];
+}
+
+async function runNew(opts, principleIds, existingIds, reference, referenceFull) {
+  const jobs = parseNewNames(opts.positional);
+  if (!jobs.length) {
+    console.error('❌ --new 模式需要提供中文名：npm run generate -- --new 中文名 [英文名]');
+    console.error('   也支持一次新建多个（空格分隔）：npm run generate -- --new 名1 名2 名3');
+    return [{ id: '(new)', ok: false, error: '缺少中文名' }];
+  }
+
+  const results = [];
+  for (let i = 0; i < jobs.length; i++) {
+    try {
+      const r = await generateNewEntry(jobs[i], opts, principleIds, existingIds, reference, referenceFull);
+      results.push(...r);
+    } catch (error) {
+      console.log(`   ❌ 生成失败：${error.message}`);
+      results.push({ id: jobs[i].nameCn, ok: false, error: error.message });
+    }
+    if (i < jobs.length - 1) await sleep(opts.delay);
+  }
+  return results;
+}
+
+/* ------------------------------------------------------------------ */
+/* 受体词条（--receptor）：结构化 frontmatter + 自由正文                  */
+/* ------------------------------------------------------------------ */
+
+const buildReceptorFmPrompt = ({ nameCn, nameEn, drugList }) => `你是精神药理学专家。请为受体词条 **${nameCn}${nameEn ? `（${nameEn}）` : ''}** 输出**严格的 JSON**（不要代码块），用于本站 frontmatter。
+
+字段与约束：
+{
+  "name_en": "英文通用名（如 Serotonin 2A Receptor）",
+  "description": "一句话机制定性（40-80 字：该受体是什么、被哪些药物干预、核心临床意义；不要用比喻修辞）",
+  "receptor_info": {
+    "receptor_type": "受体类型，如 GPCR · Gq/11 偶联 / 配体门控离子通道",
+    "type_note": "一句话补充（如 激活 IP3/DAG 信号通路）",
+    "synapse": "突触定位（突触后膜 / 突触前膜 / 突触前后膜兼有）",
+    "synapse_note": "一句话补充（如 主要作为异源受体接收信号）",
+    "ligand": "内源性配体（HTML 下标格式，如 5-羟色胺 (5-HT)）",
+    "ligand_note": "一句话补充（如 亲和力约中等水平）",
+    "brain_regions": "核心分布脑区（最主要的一个，HTML 下标格式）",
+    "regions_note": "其他分布（如 纹状体、血小板、胃肠道）",
+    "interventions": [
+      { "mode": "干预模式（完全激动/部分激动/拮抗/反向激动等）", "effect": "细胞与环路效应", "clinic": "核心临床表现", "drugs": ["代表药物中文名，**必须逐字取自下面的药物清单**；无对应药物则留空数组"] }
+    ],
+    "target_drugs": [
+      { "name": "靶向该受体的代表药物中文名（**必须逐字取自下面的药物清单**）", "ki": "Ki(nM) 公开文献值，保留 1-2 位有效数字；无可靠数据填「无数据」", "note": "一句话备注（如 SGA · 强效拮抗）" }
+    ],
+    "qa": [
+      { "q": "临床实战问题（HTML 下标格式书写受体名）", "a": "解答（100-200 字，有机制依据，HTML 下标格式）" }
+    ]
+  }
+}
+
+【药物清单】（interventions 与 target_drugs 里的药物名必须逐字取自这里，共 ${drugList.length} 个）：
+${drugList.map((d) => `- ${d.name}`).join('\n')}
+
+要求：
+- interventions 2-4 行；target_drugs 3-5 个按 Ki 亲和力从强到弱排序；qa 2-3 个；
+- 靶向药物**只允许选清单里真实存在的药**，严禁编造清单外药名；
+- Ki 依据 PDSP 数据库/文献；不确定加 [需核实]；
+- 只输出 JSON 本身。`;
+
+const buildReceptorBodyPrompt = ({ data }) => `你是精神药理学专家。为受体词条 **${data.title}**（${data.subtitle ?? ''}）撰写自由书写的百科正文（Markdown）。
+
+frontmatter 已包含的信息（不要重复表面内容，往深处写）：${JSON.stringify(
+  { description: data.description, receptor_info: data.receptor_info },
+  null, 1
+).slice(0, 1600)}
+
+内容建议（按该受体特点取舍组织，用 ### 小节）：
+- 信号通路与亚型差异
+- 生理功能与脑区分布的深层机制
+- 与疾病、药物研发的关联
+- 临床视角的使用注意与前沿进展
+
+要求：
+- 纯 Markdown；允许 ### 小节与表格；禁止一级标题（# ）、禁止代码围栏（\`\`\`）、禁止 LaTeX（$）；
+- 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）；
+- 总字数 800-2500 字；
+- 严谨的医学中文，不确定处加 [需核实]；
+- 不要任何前言或结语。`;
+
+function validateReceptorBody(text) {
+  const errors = [];
+  if (/^# /m.test(text)) errors.push('包含一级标题（# ）');
+  if (/```/.test(text)) errors.push('包含代码围栏');
+  if (/\$[^$\n]+\$/.test(text)) errors.push('包含 LaTeX（$）');
+  if (text.replace(/\s/g, '').length < 400) errors.push('正文太短（<400 字）');
+  return { errors, warnings: [], ok: errors.length === 0 };
+}
+
+async function generateReceptorEntry({ nameCn, nameEn }, opts, drugEntries, principlesDir) {
+  console.log(`\n🧬 新建受体词条：${nameCn}${nameEn ? ` / ${nameEn}` : ''}`);
+
+  // 药物清单（供关联校验）
+  const drugList = [...drugEntries.values()].map((e) => ({ id: e.entry.data.id, name: e.entry.data.name_cn }));
+  const nameToId = new Map(drugList.map((d) => [d.name, d.id]));
+
+  // 1) frontmatter JSON
+  let fm;
+  {
+    const raw = await callGemini(buildReceptorFmPrompt({ nameCn, nameEn, drugList }), { json: true, model: opts.model });
+    try {
+      fm = parseJsonBlock(raw);
+    } catch (error) {
+      console.error(`   ❌ frontmatter JSON 解析失败：${error.message}`);
+      return [{ id: nameCn, ok: false, error: 'JSON 解析失败' }];
+    }
+  }
+
+  const id = opts.id || slugifyId(fm.name_en || nameEn || '');
+  if (!id) {
+    console.error(`   ❌ 无法为「${nameCn}」推导出合法词条 id（需要英文名）。可用 --id=xxx 显式指定。`);
+    return [{ id: nameCn, ok: false, error: '无法推导词条 id（缺英文名）' }];
+  }
+
+  // 2) 关联药物校验：剔除清单外药名（防编造）；兼容字符串/对象两种 AI 输出形状
+  const info = fm.receptor_info ?? {};
+  let dropped = 0;
+  const drugNameOk = (name) => {
+    if (nameToId.has(name)) return true;
+    dropped += 1;
+    console.log(`   ⚠️  剔除清单外药物：${name ?? '(无名行)'}（药物库中不存在，无法建立跳转）`);
+    return false;
+  };
+  const normalizeDrugNames = (list) =>
+    (Array.isArray(list) ? list : [])
+      .map((row) => (typeof row === 'string' ? row : row?.name))
+      .filter((name) => drugNameOk(name));
+  const normalizeTargetDrugs = (list) =>
+    (Array.isArray(list) ? list : [])
+      .map((row) => (typeof row === 'string' ? { name: row } : row))
+      .filter((row) => drugNameOk(row?.name));
+  if (Array.isArray(info.interventions)) info.interventions = info.interventions.map((row) => ({ ...row, drugs: normalizeDrugNames(row.drugs) }));
+  if (Array.isArray(info.target_drugs)) info.target_drugs = normalizeTargetDrugs(info.target_drugs);
+
+  const data = {
+    id,
+    type: 'receptor',
+    title: nameCn,
+    subtitle: fm.name_en || nameEn || '',
+    description: fm.description || '',
+    receptor_info: info,
+  };
+
+  // 3) schema 校验
+  const parsed = principleSchema.safeParse(data);
+  if (!parsed.success) {
+    console.error('   ❌ frontmatter 校验未通过：');
+    for (const issue of parsed.error.issues) console.error(`      - ${issue.path.join('.') || '(root)'} — ${issue.message}`);
+    return [{ id, ok: false, error: 'frontmatter 校验失败' }];
+  }
+
+  // 4) 自由正文
+  const raw = await callGemini(buildReceptorBodyPrompt({ data: parsed.data }), { model: opts.model });
+  let normalized = normalizeBody(raw);
+  let verdict = validateReceptorBody(normalized.text);
+  if (!verdict.ok) {
+    console.log(`   ↻ 正文未通过校验，发起一次修复：${verdict.errors.join('；')}`);
+    const fixedRaw = await callGemini(buildRepairPrompt({ data: parsed.data, previous: normalized.text, errors: verdict.errors }), { model: opts.model });
+    const fixed = normalizeBody(fixedRaw);
+    const fixedVerdict = validateReceptorBody(fixed.text);
+    if (fixedVerdict.ok || fixedVerdict.errors.length < verdict.errors.length) {
+      normalized = fixed;
+      verdict = fixedVerdict;
+      console.log(`   ↻ 修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
+    }
+  }
+  if (!verdict.ok && !opts.lenient) {
+    console.error(`   ❌ 正文校验未通过，已拒绝写盘：${verdict.errors.join('；')}`);
+    return [{ id, ok: false, error: verdict.errors.join('；') }];
+  }
+
+  const content = matter.stringify(`${normalized.text.trim()}\n`, parsed.data);
+  const file = path.join(principlesDir, `${id}.md`);
+  if (fs.existsSync(file)) {
+    if (!opts.force) {
+      console.error(`   ❌ 文件已存在：${path.relative(ROOT, file)}（整体覆盖重写请加 --force）`);
+      return [{ id, ok: false, error: '文件已存在' }];
+    }
+    const backupPath = backup(file);
+    fs.writeFileSync(file, content, 'utf-8');
+    console.log(`   ♻️  已覆盖重写 ${path.relative(ROOT, file)}（正文 ${normalized.text.length} 字；旧文件备份 ${backupPath}）`);
+    return [{ id, ok: true, length: normalized.text.length, overwritten: true }];
+  }
+  fs.writeFileSync(file, content, 'utf-8');
+  console.log(`   ✅ 已创建 ${path.relative(ROOT, file)}（正文 ${normalized.text.length} 字）`);
+  return [{ id, ok: true, length: normalized.text.length }];
+}
+
+async function runReceptorNew(opts, drugEntries, principlesDir) {
+  const jobs = parseNewNames(opts.positional);
+  if (!jobs.length) {
+    console.error('❌ --receptor 模式需要提供受体名：npm run generate -- --receptor 受体名 [--id=xx]');
+    return [{ id: '(new)', ok: false, error: '缺少受体名' }];
+  }
+  const results = [];
+  for (let i = 0; i < jobs.length; i++) {
+    try {
+      results.push(
+        ...(await generateReceptorEntry(jobs[i], opts, drugEntries, principlesDir))
+      );
+    } catch (error) {
+      console.log(`   ❌ 生成失败：${error.message}`);
+      results.push({ id: jobs[i].nameCn, ok: false, error: error.message });
+    }
+    if (i < jobs.length - 1) await sleep(opts.delay);
+  }
+  return results;
 }
 
 async function main() {
@@ -685,11 +1025,12 @@ async function main() {
   }
 
   console.log('🚀 PsychPedia 词条生成器（v2）');
-  console.log(`   模型：${opts.model}${opts.mock ? `（mock=${opts.mock}，不调用 API）` : ''}`);
+  console.log(`   模型：${opts.model}${opts.mock ? `（mock=${opts.mock}，不调用 API）` : ''}${BASE_URL ? `（经 ${BASE_URL} 中转）` : ''}`);
+  if (REVIEW_MODEL) console.log(`   审稿：${REVIEW_MODEL}（双 AI 流水线）`);
   console.log(`   词条库：${entries.size} 个药物词条 / ${principleIds.size} 个受体词条`);
 
   if (!opts.mock && !API_KEY) {
-    console.error('\n❌ 缺少 GEMINI_API_KEY。请在 v2/.env 中配置（可参考 v2/.env.example），或先用 --mock 自测。');
+    console.error('\n❌ 缺少 GEMINI_API_KEY。请在 .env 中配置（可参考 .env.example），或先用 --mock 自测。');
     process.exit(1);
   }
 
@@ -697,6 +1038,11 @@ async function main() {
   let targets = [];
   if (opts.newEntry) {
     const results = await runNew(opts, principleIds, existingIds, referenceBody, referenceFull);
+    report(results);
+    return;
+  }
+  if (opts.receptorEntry) {
+    const results = await runReceptorNew(opts, entries, PRINCIPLES_DIR);
     report(results);
     return;
   }

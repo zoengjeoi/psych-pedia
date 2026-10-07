@@ -1,6 +1,9 @@
 ---
 /**
  * 原理词条（受体 / 转运体 / 离子通道 / 假说）正文，服务端渲染。
+ * 含 receptor_info 结构化数据的受体条目走新版式：机制定性 / 身份证 / 干预模式 /
+ * 靶向药物排名 / 临床问答 + 底部自由书写的百科正文（无内容则整段隐藏）；
+ * 旧条目（无结构化数据）回退旧版式。
  */
 import type { CollectionEntry } from 'astro:content';
 import { isReceptorLike, type TocItem } from '../lib/types';
@@ -10,12 +13,42 @@ interface Props {
   entry: CollectionEntry<'principles'>;
   wiki: { html: string; toc: TocItem[] };
   introHtml: string;
+  /** 药物中文名 → 词条 id 的索引，用于靶向药物反向链接 */
+  drugIndex?: Map<string, string>;
 }
 
-const { entry, wiki, introHtml } = Astro.props;
+const { entry, wiki, introHtml, drugIndex } = Astro.props;
 const principle = entry.data;
 const receptorLike = isReceptorLike(principle.type);
+const info = principle.receptor_info;
 const images = extractImages(entry.body ?? '');
+
+// 自由正文空判定：空 / 仅占位符 / 仅引用行 → 不渲染正文板块
+const rawBody = (entry.body ?? '').replace(/\r/g, '');
+const cleanedBody = rawBody
+  .replace(/（待补充详细内容）/g, '')
+  .replace(/^>.*$/gm, '')
+  .trim();
+const bodyEmpty = !cleanedBody;
+
+/** Ki(nM) 解析（"> 1000"、"12 [需核实]" 等取首个数字） */
+const parseKi = (kiText: string) => {
+  const m = String(kiText).match(/[\d.]+/);
+  return m ? parseFloat(m[0]) : NaN;
+};
+
+/** 横条宽度：线性比例，锚点固定 10 nM（=「高亲和力」分级上限，与表下注释对齐）。
+ *  Ki ≤ 10 nM 满条；Ki 越大条越短。不用"最强者"做锚——清单里只要有一个纳摩尔级
+ *  药物（如卡利拉嗪 0.085），其余临床强药都会被压扁。 */
+const KI_ANCHOR = 10;
+const kiBarWidth = (kiText: string) => {
+  const v = parseKi(kiText);
+  if (Number.isNaN(v) || v <= 0) return 0;
+  return Math.max(1.5, Math.min(100, (KI_ANCHOR / v) * 100));
+};
+
+const QUOTE_ICON =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zM24 3v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-4v-10h9.983z"/></svg>';
 ---
 
 <div class="entry-shell mx-auto w-full px-4 py-8 md:px-8 md:py-10">
@@ -38,9 +71,8 @@ const images = extractImages(entry.body ?? '');
           ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/15 dark:text-cyan-300'
           : 'bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300'
       }`}
-    >
-      {receptorLike ? '受体 / 转运体 / 离子通道' : '生物学假说'}
-    </p>
+      set:html={info ? `受体百科 · ${info.receptor_type}` : receptorLike ? '受体 / 转运体 / 离子通道' : '生物学假说'}
+    />
     <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <h1 class="font-serif text-4xl font-black tracking-tight text-slate-900 sm:text-5xl dark:text-slate-200">
         {principle.title}
@@ -49,11 +81,189 @@ const images = extractImages(entry.body ?? '');
         <p class="text-xl text-slate-400 sm:text-2xl dark:text-slate-500">{principle.subtitle}</p>
       )}
     </div>
+
+    {
+      info && principle.description && (
+        <aside
+          class="mt-5 rounded-lg bg-slate-100 px-4 py-3 text-[15px] leading-relaxed text-slate-700 dark:bg-medical-surface-alt dark:text-slate-300"
+          aria-label="机制概要"
+        >
+          <div class="md-quote-label mb-2" set:html={QUOTE_ICON + '<span>机制概要</span>'} />
+          <div set:html={principle.description} />
+        </aside>
+      )
+    }
   </header>
 
-  <!-- 简介：全站唯一放大的正文段落 -->
   {
-    introHtml && (
+    info && (
+      <section class="mt-8" aria-label="基本信息">
+        <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">基本信息</h2>
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+            <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">受体类型</span>
+            <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200" set:html={info.receptor_type} />
+            {info.type_note && <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500" set:html={info.type_note} />}
+          </div>
+          <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+            <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">突触定位</span>
+            <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200" set:html={info.synapse} />
+            {info.synapse_note && <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500" set:html={info.synapse_note} />}
+          </div>
+          <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+            <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">内源性配体</span>
+            <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200" set:html={info.ligand} />
+            {info.ligand_note && <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500" set:html={info.ligand_note} />}
+          </div>
+          <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-3 text-center dark:border-medical-line dark:bg-medical-surface">
+            <span class="text-[11px] font-semibold tracking-widest text-slate-400 dark:text-slate-500">核心分布脑区</span>
+            <span class="mt-1 text-sm font-bold text-slate-900 dark:text-slate-200" set:html={info.brain_regions} />
+            {info.regions_note && <span class="mt-0.5 text-xs text-slate-400 dark:text-slate-500" set:html={info.regions_note} />}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    info && info.interventions.length > 0 && (
+      <section class="mt-10" aria-label="干预模式与临床结局">
+        <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">干预模式与临床结局</h2>
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-medical-line">
+          <table class="w-full min-w-[42rem] text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-medical-surface-alt dark:text-slate-400">
+              <tr>
+                <th class="px-4 py-2.5 font-semibold">干预模式</th>
+                <th class="px-4 py-2.5 font-semibold">细胞与环路效应</th>
+                <th class="px-4 py-2.5 font-semibold">核心临床表现</th>
+                <th class="px-4 py-2.5 font-semibold">代表药物</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white text-slate-700 dark:divide-medical-line dark:bg-medical-surface dark:text-slate-300">
+              {info.interventions.map((row, i) => {
+                const dotColors = ['bg-rose-500', 'bg-cyan-500', 'bg-amber-500', 'bg-emerald-500', 'bg-violet-500'];
+                return (
+                  <tr class="transition-colors hover:bg-slate-50/70 dark:hover:bg-medical-surface-alt/60">
+                    <td class="whitespace-nowrap px-4 py-3 align-top">
+                      <span class="inline-flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-100">
+                        <span class={`inline-block h-1.5 w-1.5 rounded-full ${dotColors[i % dotColors.length]}`} aria-hidden="true" />
+                        {row.mode}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 align-top" set:html={row.effect} />
+                    <td class="px-4 py-3 align-top">{row.clinic}</td>
+                    <td class="px-4 py-3 align-top">
+                      <div class="text-slate-700 dark:text-slate-300">
+                        {row.drugs.map((name, j) => {
+                          const id = drugIndex?.get(name);
+                          return (
+                            <>
+                              {j > 0 && '、'}
+                              {id ? (
+                                <a
+                                  href={`/${id}`}
+                                  class="font-medium text-cyan-700 transition-colors hover:text-cyan-600 hover:underline dark:text-cyan-300"
+                                >
+                                  {name}
+                                </a>
+                              ) : (
+                                <span>{name}</span>
+                              )}
+                            </>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    info && info.target_drugs.length > 0 && (
+      <section class="mt-10" aria-label="靶向该受体的代表药物">
+        <h2 class="mb-1 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">靶向该受体的代表药物</h2>
+        <p class="mb-3 text-xs text-slate-400 dark:text-slate-500">
+          按 K<sub>i</sub> 亲和力排序；条长按 K<sub>i</sub> 线性比例（Ki ≤ 10 nM 为满条，Ki 越大条越短）；点击药物名称跳转词条。数值供横向比较[需核实]。
+        </p>
+        <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-medical-line">
+          <div class="grid grid-cols-[8rem_1fr_4.5rem] items-center gap-x-3 bg-slate-50 px-4 py-2 text-[11px] font-semibold text-slate-500 sm:grid-cols-[13rem_1fr_4.5rem] dark:bg-medical-surface-alt dark:text-slate-400">
+            <span>药物</span>
+            <span>亲和力（线性比例，Ki ≤ 10 nM 为满条）</span>
+            <span class="justify-self-end">Ki (nM)</span>
+          </div>
+          <div class="divide-y divide-slate-100 bg-white dark:divide-medical-line dark:bg-medical-surface">
+            {info.target_drugs.map((d) => {
+              const id = drugIndex?.get(d.name);
+              const inner = (
+                <>
+                  <div class="min-w-0">
+                    <span
+                      class={`block truncate text-sm font-bold transition-colors ${
+                        id
+                          ? 'text-slate-700 group-hover:text-cyan-700 dark:text-slate-200 dark:group-hover:text-cyan-300'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {d.name}
+                    </span>
+                    {d.note && (
+                      <span class="block truncate text-[11px] text-slate-400 dark:text-slate-500">{d.note}</span>
+                    )}
+                  </div>
+                  <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-medical-surface-alt" aria-hidden="true">
+                    <div class="h-full rounded-full bg-cyan-600" style={`width:${kiBarWidth(d.ki)}%`} />
+                  </div>
+                  <span class="justify-self-end font-mono text-sm font-bold text-cyan-700 dark:text-cyan-300">{d.ki.replace('[需核实]', '').trim()}</span>
+                </>
+              );
+              return id ? (
+                <a
+                  href={`/${id}`}
+                  class="group grid grid-cols-[8rem_1fr_4.5rem] items-center gap-x-3 px-4 py-2.5 transition-colors hover:bg-slate-50/70 sm:grid-cols-[13rem_1fr_4.5rem] dark:hover:bg-medical-surface-alt/60"
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div class="grid grid-cols-[8rem_1fr_4.5rem] items-center gap-x-3 px-4 py-2.5 sm:grid-cols-[13rem_1fr_4.5rem]">
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    info && info.qa.length > 0 && (
+      <section class="mt-10" aria-label="临床实战问答">
+        <h2 class="mb-3 font-serif text-lg font-bold text-slate-800 dark:text-slate-100">临床实战问答</h2>
+        <div class="space-y-3">
+          {info.qa.map((item) => (
+            <article class="rounded-xl border border-slate-200 bg-white p-5 dark:border-medical-line dark:bg-medical-surface">
+              <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">
+                <span class="flex items-start gap-2">
+                  <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500 text-[11px] font-black text-white" aria-hidden="true">Q</span>
+                  <span set:html={item.q} />
+                </span>
+              </h3>
+              <div class="mt-2 space-y-2 pl-7 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300" set:html={item.a} />
+            </article>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    !info && introHtml && (
       <section class="py-8" aria-label="简介">
         <div
           class="max-w-3xl text-lg leading-relaxed text-slate-700 [&_p]:mb-3 dark:text-slate-300"
@@ -91,9 +301,9 @@ const images = extractImages(entry.body ?? '');
     )
   }
 
-  <!-- 百科正文卡片（与上方版面同宽对齐；目录入口在顶栏右侧） -->
+  <!-- 百科正文（自由书写的 Markdown；无内容则整段隐藏） -->
   {
-    wiki.html && (
+    !bodyEmpty && wiki.html && (
       <section class="mt-4" aria-label="百科正文">
         <div
           class="wiki rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:px-8 dark:border-medical-line dark:bg-medical-surface"

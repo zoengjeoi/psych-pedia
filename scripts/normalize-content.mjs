@@ -18,8 +18,7 @@ const contentDir = path.resolve(__dirname, '..', 'src', 'content');
 
 // [正则(匹配整个标题行,去掉行尾空白后), 替换标题]
 const RULES = [
-  [/^## 药物代谢Dynamics和服药方式()?Dosing$/u, '## 药物代谢和服药方式'],
-  [/^## 药物代谢Dynamics和服药方式$/u, '## 药物代谢和服药方式'],
+  [/^## 药物代谢\s*Dynamics\s*和服药方式(?:\s*Dosing)?$/u, '## 药物代谢和服药方式'],
   [/^## Counseling\s*[（(]\s*患者教育(\s*FAQ)?\s*[)）]$/u, '## 患者教育'],
   [/^## 最佳临床实践\s*[（(]?\s*[-–—]?\s*理想病人\s*(Ideal Candidate)?\s*[)）]?$/u, '## 理想病人'],
   [/^## 概况 Overview\s*$/u, '## 概况'],

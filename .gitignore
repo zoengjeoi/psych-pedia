@@ -42,3 +42,12 @@ dev.log
 .backups/
 .DS_Store
 backup/
+
+# —— 本地参考资料与个人文件（不入库） ——
+/1.html
+/2.html
+/icon-preview.html
+/ppt/
+/v2/
+/patch-expand-targets.mjs
+/patch-scan-ki.mjs

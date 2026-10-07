@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import DrugArticle from '../components/DrugArticle.astro';
 import PrincipleArticle from '../components/PrincipleArticle.astro';
 import {
+  buildEnzymeMap,
   buildWikiPatterns,
   getDrugs,
   getPrinciples,
@@ -43,6 +44,15 @@ const { kind, entry } = Astro.props as {
 
 const principles = await getPrinciples();
 const patterns = buildWikiPatterns(principles);
+// 药物中文名 → 词条 id 的索引（受体条目的靶向药物反向链接用）
+const drugIndex = new Map((await getDrugs()).map((d) => [d.data.name_cn, d.data.id]));
+// 全站有效词条 id 白名单（内链守卫：AI 生成的链接指向不存在的条目时降级为纯文本）
+const enzymeGroups = await buildEnzymeMap();
+const validIds = new Set<string>([
+  ...drugIndex.values(),
+  ...principles.map((p) => p.data.id),
+  ...enzymeGroups.map((g) => g.enzyme),
+]);
 
 let title: string;
 let description: string;
@@ -55,16 +65,16 @@ if (kind === 'drug') {
   description = `${drug.data.name_cn}（${drug.data.name_en}）：${drugCategories(drug).join('、')}。${
     drug.data.tags.slice(0, 4).join('、') || '作用机制、药代动力学与临床用药速查'
   }。`;
-  article = await renderWiki(drug.body ?? '', patterns);
+  article = await renderWiki(drug.body ?? '', patterns, validIds);
 } else {
   const principle = entry as CollectionEntry<'principles'>;
   title = `${principle.data.title}${principle.data.subtitle ? ` ${principle.data.subtitle}` : ''} — PsychPedia`;
   description =
     principle.data.description ?? `${principle.data.title}：受体药理学特性、临床相关性与词条速查。`;
   const { intro, rest } = splitPrincipleIntro(principle.body ?? '');
-  const introWiki = intro ? await renderWiki(intro, patterns) : null;
+  const introWiki = intro ? await renderWiki(intro, patterns, validIds) : null;
   introHtml = introWiki?.html ?? '';
-  article = await renderWiki(rest, patterns);
+  article = await renderWiki(rest, patterns, validIds);
 }
 ---
 
@@ -75,12 +85,14 @@ if (kind === 'drug') {
         entry={entry as CollectionEntry<'drugs'>}
         wiki={article}
         patterns={patterns}
+        validIds={validIds}
       />
     ) : (
       <PrincipleArticle
         entry={entry as CollectionEntry<'principles'>}
         wiki={article}
         introHtml={introHtml}
+        drugIndex={drugIndex}
       />
     )
   }

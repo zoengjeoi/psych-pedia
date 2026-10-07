@@ -2,7 +2,9 @@
  * 构建期 Markdown 渲染管线（词条正文专用）。
  *
  * 相比旧版客户端 react-markdown 方案：
- *  - CJK 加粗修正（fixCjkPunctuationEmphasis + 零宽空格剥离）原样移植；
+ *  - CJK 加粗修正（fixCjkPunctuationEmphasis + 零宽空格剥离）在旧版基础上把标点
+ *    判定从「全角/CJK 标点」泛化为 CommonMark 全集（\p{P}+\p{S}，含半角括号引号），
+ *    修复 `其**"打了就跑"…` / `**(hit-and-run)**化学` 这类半角标点紧邻导致的漏修；
  *  - 受体/假说术语自动链接从运行时字符串替换改为 mdast 层注入（只命中真正的术语，
  *    不再误伤普通英文单词，且天然跳过代码与既有链接）；
  *  - 标题 id 与 TOC 由同一遍 rehype 插件生成，永不错配（旧版两处 slug 函数靠约定对齐）。
@@ -17,30 +19,43 @@ import { visit, SKIP } from 'unist-util-visit';
 import type { TocItem, WikiPattern } from './types';
 
 /* ------------------------------------------------------------------ */
-/* CJK 强调修正（移植自旧 cjkMarkdown.ts，逻辑保持一致）                */
+/* CJK 强调修正（Obsidian 式侧翼判定放宽，零宽空格方案）                 */
 /* ------------------------------------------------------------------ */
 
-const ZWSP = '​';
+const ZWSP = '​'; // 零宽空格（仅作解析期的临时辅助字符，渲染前会被 remarkStripZeroWidth 剥除）
 
-const isCjkPunct = (ch: string | undefined): boolean => {
+/**
+ * CommonMark 眼中的「标点」= Unicode \p{P} + \p{S} 全集：
+ * 全角（（）、。、中文引号破折号）与半角 ( ) " ' - 等一律算标点。
+ * 旧版只认全角，导致 `其**"打了就跑"…` 与 `**(hit-and-run)**化学` 这类
+ * 半角标点紧邻 `**` 的写法漏修。
+ */
+const isPunct = (ch: string | undefined): boolean => {
   if (!ch) return false;
-  const cp = ch.codePointAt(0);
-  if (cp === undefined) return false;
-  const inCjkSymbols = cp >= 0x3000 && cp <= 0x303f;
-  const inFullwidth = cp >= 0xff00 && cp <= 0xff60;
-  const curlyQuotes =
-    cp === 0x2018 || cp === 0x2019 || cp === 0x201c || cp === 0x201d;
-  const dash = cp === 0x2014 || cp === 0x2026;
-  if (!(inCjkSymbols || inFullwidth || curlyQuotes || dash)) return false;
-  return !/[\p{L}\p{N}\s]/u.test(ch);
+  if (ch === ZWSP) return false;
+  return /[\p{P}\p{S}]/u.test(ch);
 };
 
 const isWordish = (ch: string | undefined): boolean => {
   if (!ch) return false;
   if (ch === ZWSP) return false;
-  return !/\s/u.test(ch) && !/\p{P}|\p{S}/u.test(ch);
+  return !/\s/u.test(ch) && !/[\p{P}\p{S}]/u.test(ch);
 };
 
+/**
+ * 强调定界符侧翼修正。
+ *
+ * CommonMark 的开合判定（flanking rules）假设词与词之间有空格；中文正文没有空格，
+ * 当 `**` 一侧紧邻标点、另一侧紧邻词字符（汉字/字母/数字）时就会开不上或合不上，
+ * 渲染成字面星号：
+ *   其**"打了就跑"(hit-and-run)** 的  →  开 ** 后跟引号、前邻汉字，开不上
+ *   **…(hit-and-run)**化学           →  闭 ** 前邻右括号、后跟汉字，合不上
+ *
+ * 做法（与旧版一致、对原文零改动）：在定界符与紧邻标点之间插入 U+200B，让引擎
+ * 眼中该侧变为「非标点」从而走判定主干；解析完成后 remarkStripZeroWidth 再剥掉
+ * 全部 U+200B——最终 DOM 与复制出的文本不含任何零宽字符。
+ * 仅插入；一侧是标点、另一侧是标点/空白时不插入（这些情形原生判定已正确）。
+ */
 export const fixCjkPunctuationEmphasis = (source: string): string => {
   if (!source) return source;
   let out = '';
@@ -52,8 +67,8 @@ export const fixCjkPunctuationEmphasis = (source: string): string => {
     const len = match[0].length;
     const before = source[idx - 1];
     const after = source[idx + len];
-    const insertBefore = isCjkPunct(before) && isWordish(after);
-    const insertAfter = isCjkPunct(after) && isWordish(before);
+    const insertBefore = isPunct(before) && isWordish(after);
+    const insertAfter = isPunct(after) && isWordish(before);
     if (!insertBefore && !insertAfter) continue;
     out += source.slice(last, idx);
     if (insertBefore) out += ZWSP;
@@ -66,9 +81,14 @@ export const fixCjkPunctuationEmphasis = (source: string): string => {
 };
 
 const remarkStripZeroWidth = () => (tree: unknown) => {
-  visit(tree as never, (node: { value?: unknown }) => {
+  visit(tree as never, (node: { value?: unknown; url?: unknown; properties?: Record<string, unknown> | undefined }) => {
+    // 文本/代码/HTML 原文节点
     if (typeof node?.value === 'string') {
       node.value = node.value.split(ZWSP).join('');
+    }
+    // mdast 层的链接/图片目标（url 在 hast 层才会变成 properties.href）
+    if (typeof node?.url === 'string' && node.url.includes(ZWSP)) {
+      node.url = node.url.split(ZWSP).join('');
     }
   });
 };
@@ -445,8 +465,7 @@ const ELEMENT_CLASSES: Record<string, string> = {
   ul: 'list-disc list-inside space-y-1 mb-3 text-slate-700 dark:text-slate-300',
   ol: 'list-decimal list-inside space-y-1 mb-3 text-slate-700 dark:text-slate-300',
   li: 'ml-4 marker:text-slate-400',
-  blockquote:
-    'border-l-4 border-medical-primary pl-4 py-2 my-3 bg-cyan-50/70 dark:bg-cyan-500/10 text-slate-700 dark:text-slate-300 not-italic',
+  blockquote: 'md-quote mb-4 rounded-lg bg-slate-100 px-4 py-3 not-italic text-slate-700 dark:bg-medical-surface-alt dark:text-slate-300',
   pre: 'bg-slate-100 dark:bg-slate-800 p-3 rounded-lg overflow-x-auto mb-3',
   table:
     'min-w-full divide-y divide-slate-200 dark:divide-medical-line border border-slate-200 dark:border-medical-line text-xs sm:text-sm',
@@ -582,8 +601,66 @@ function addClasses(
 }
 
 /* ------------------------------------------------------------------ */
-/* 对外入口                                                            */
+/* 引用框改造：> 引用的首行提取为灰底标签（默认「引用」），其余为正文。     */
+/* 面板样式见 ELEMENT_CLASSES.blockquote + global.css 的 .md-quote-label */
 /* ------------------------------------------------------------------ */
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const QUOTE_LABEL_DEFAULT = '引用';
+
+const remarkQuoteLabel = () => (tree: unknown) => {
+  visit(tree as never, 'blockquote', (node: { children: never[] }) => {
+    const children = node.children as Array<Record<string, unknown>>;
+    let label = '';
+    const first = children[0] as { type: string; children?: Array<Record<string, unknown>> } | undefined;
+    if (first?.type === 'paragraph' && first.children?.length) {
+      const firstChild = first.children[0] as { type: string; value?: string };
+      const multiline = firstChild?.type === 'text' && (firstChild.value ?? '').includes('\n');
+      const pureText = first.children.every((c) => (c as { type: string }).type === 'text');
+      if (multiline) {
+        // 首段含换行：首行 = 标签，其余留在原段落
+        const [head, ...rest] = (firstChild.value as string).split('\n');
+        label = head.trim();
+        const remain = rest.join('\n').trim();
+        if (remain) firstChild.value = remain;
+        else children.shift();
+      } else if (children.length > 1 && pureText) {
+        // 多段落：首段为纯文本短行时视为标签（避免吞掉正文首句）
+        label = first.children.map((c) => (c as { value?: string }).value ?? '').join('').trim();
+        if (label && label.length <= 20) children.shift();
+        else label = '';
+      }
+    }
+    const escaped = escapeHtml(label || QUOTE_LABEL_DEFAULT);
+    children.unshift({
+      type: 'html',
+      value: `<div class="md-quote-label"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zM24 3v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-4v-10h9.983z"/></svg><span>${escaped}</span></div>`,
+    } as never);
+  });
+};
+
+/* ------------------------------------------------------------------ */
+/* Prompt                                                              */
+/* ------------------------------------------------------------------ */
+
+/** 内链守卫：目标词条不存在的链接降级为纯文本（AI 生成的正文/雷达偶发硬编码不存在的 id） */
+const rehypeValidateInternalLinks = (validIds: Set<string> | null) => (tree: unknown) => {
+  if (!validIds) return;
+  visit(tree as never, 'element', (node: { tagName?: string; properties?: Record<string, unknown> }) => {
+    if (node.tagName !== 'a') return;
+    const props = node.properties ?? (node.properties = {});
+    const href = String(props.href ?? '');
+    if (!href.startsWith('/') || href.startsWith('//')) return;
+    const clean = decodeURIComponent(href.split('#')[0]).replace(/\/+$/, '');
+    if (!clean || validIds.has(clean.slice(1))) return;
+    node.tagName = 'span';
+    delete props.href;
+    delete props.target;
+    delete props.rel;
+  });
+};
 
 export interface RenderedWiki {
   html: string;
@@ -592,13 +669,15 @@ export interface RenderedWiki {
 
 export const renderWiki = async (
   markdown: string,
-  patterns: WikiPattern[] = []
+  patterns: WikiPattern[] = [],
+  validIds: Set<string> | null = null
 ): Promise<RenderedWiki> => {
   const toc: TocItem[] = [];
   const source = fixCjkPunctuationEmphasis(markdown ?? '');
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(remarkQuoteLabel)
     .use(remarkDropH1)
     .use(remarkStripZeroWidth)
     .use(remarkNormalizeImages)
@@ -609,6 +688,7 @@ export const renderWiki = async (
     .use(rehypeAutoLink, patterns)
     .use(rehypeWiki, { toc })
     .use(rehypeWrapTables)
+    .use(rehypeValidateInternalLinks, validIds)
     .use(rehypeStringify)
     .process(source);
   return { html: String(file), toc };

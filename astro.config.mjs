@@ -6,14 +6,19 @@ import AstroPWA from '@vite-pwa/astro';
 
 export default defineConfig({
   site: 'https://psychpedia.me',
-  // 明确绑定 IPv4 回环：Node 默认可能只监听 [::1]，浏览器走 127.0.0.1 时会连接被拒
-  server: { host: '127.0.0.1' },
-  preview: { host: '127.0.0.1' },
+  // host: true 监听所有网卡：本机 localhost 与局域网设备（手机同一 Wi-Fi 下
+  // 访问 http://<局域网IP>:4321）都能连。Vite 对 host:true 走双栈监听，
+  // IPv4 回环 127.0.0.1 与 IPv6 的 ::1 均可连通，不会重现早期
+  // 「Node 默认只听 [::1] 导致 127.0.0.1 被拒」的问题
+  server: { host: true },
+  preview: { host: true },
   // 关闭 Dev Toolbar：它只在 astro dev 出现，生产构建本就不含；
   // 配置级关闭后所有设备（含手机调试）都不再显示，无需每人手动 astro preferences disable
   devToolbar: { enabled: false },
-  // 悬停预取内部链接：切词条基本瞬时完成，加载转圈只在慢网兜底出现
-  prefetch: true,
+  // 悬停预取内部链接：切词条基本瞬时完成，加载转圈只在慢网兜底出现。
+  // 必须显式开 prefetchAll——只写 true 时，不带 data-astro-prefetch 属性的链接不会匹配任何策略，预取等于空转；
+  // 慢连接（2G/省流）下 Astro 自动降级为 tap 策略，触屏也能获得预启动
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [
     react(),
     AstroPWA({
