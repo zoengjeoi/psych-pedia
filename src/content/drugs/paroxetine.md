@@ -39,7 +39,7 @@ pearls:
   -
       title: "撤药综合征"
       type: "danger"
-      content: "半衰期短且无活性代谢物，突然停药极易引起严重的撤药反应（电击感、头晕）。被Stahl称为“路不平（Potholes）”。"
+      content: "半衰期短且无活性代谢物，突然停药极易引起严重的撤药反应（电击感、头晕）。"
   -
       title: "妊娠风险"
       type: "danger"

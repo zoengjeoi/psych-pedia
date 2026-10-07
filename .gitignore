@@ -51,3 +51,7 @@ backup/
 /v2/
 /patch-expand-targets.mjs
 /patch-scan-ki.mjs
+
+# PR API 临时文件
+pr-payload.json
+pr-resp.json
