@@ -60,6 +60,9 @@ const TEMPERATURE = Number.isFinite(Number(process.env.GEMINI_TEMPERATURE))
 // 可选：审稿模型（双 AI 流水线——生成模型写完后由它挑刺，问题回喂给生成模型修复一轮）。
 // 留空 = 只用程序化校验（章节结构/字数/雷达图绑定等）。设置后审核模型也看不到任何密钥，密钥只在本脚本进程内使用
 const REVIEW_MODEL = process.env.GEMINI_REVIEW_MODEL || '';
+// 可选：审核阶段接入 Google Search Grounding（核实批准状态/指南新近性）。'1' = 审稿时启用搜索工具；
+// CLI --search 等效。写作模型保持离线（写稿不需要检索，检索的判断交给审核）
+const GROUNDING = process.env.GEMINI_GROUNDING === '1';
 
 const SECTIONS = [
   '## 概况',
@@ -74,6 +77,10 @@ const SECTIONS = [
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 营销式用语（warning 级：不阻断出稿，打印并附进修复循环）。金标准/一线等在指南有据时
+// 可保留，由人复核，所以不做 error。
+const HYPE_RE = /卓越|完美|彻底改变|革命性|里程碑|划时代|强效逆转|独一无二|金标准|最佳拍档|绝对安全/g;
 
 // 本次运行的 token 用量（用于对比不同模型的成本）
 const usage = { calls: 0, prompt: 0, candidates: 0, thoughts: 0, ms: 0 };
@@ -96,6 +103,8 @@ function parseArgs(argv) {
     model: DEFAULT_MODEL,
     id: '',
     mock: null,
+    search: false,
+    testSearch: false,
     positional: [],
   };
   for (const arg of argv) {
@@ -107,6 +116,8 @@ function parseArgs(argv) {
     else if (arg === '--dump') opts.dump = true;
     else if (arg === '--lenient') opts.lenient = true;
     else if (arg === '--yes') opts.yes = true;
+    else if (arg === '--search') opts.search = true;
+    else if (arg === '--test-search') opts.testSearch = true;
     else if (arg.startsWith('--mock')) {
       const variant = arg.includes('=') ? arg.split('=')[1] : 'good';
       opts.mock = variant || 'good';
@@ -315,6 +326,7 @@ ${existingBody ? `\n**现有内容（供参考，可保留其中准确的部分�
 5. **列表紧凑**：有序/无序列表条目内部不要换行分段、条目之间不要留空行（站点渲染会把空行分隔的列表变成松散列表，导致序号错行）。
 6. **长度**：总字数 2500-3500 字，每章节充实、纯干货。
 7. **语言**：专业客观的医学中文；药物名与受体名保留英文；避免"可能""也许"等模棱两可表述，除非医学上确实未定论。
+8. **循证措辞**：机制推导出的临床获益必须写"理论上/有望/厂商宣称"，不得写成既成临床事实；禁用"卓越/完美/彻底改变/革命性/金标准"等营销式形容词——临床试验数据能说话的地方让数据说话，没有数据就别拔高。
 
 **参考示例**（已完成的高质量条目节选）：
 
@@ -366,29 +378,40 @@ ${Array.from(principleIds).sort().join(', ')}
 - 只输出 JSON 本身。`;
 
 /** 校验未通过时的修复提示：把具体问题回喂给模型，要求完整重出 */
-const buildRepairPrompt = ({ data, previous, errors }) => `你上一次为药物 **${data.name_cn}（${data.name_en}）** 输出的词条正文未通过自动校验。
+const buildRepairPrompt = ({ data, previous, errors, kind = 'drug' }) => {
+  const isDrug = kind !== 'receptor';
+  const name = isDrug
+    ? `药物 **${data.name_cn}（${data.name_en}）**`
+    : `受体词条 **${data.title}（${data.subtitle ?? ''}）**`;
+  const hardRules = isDrug
+    ? `- 必须包含且仅包含以下 9 个章节，标题逐字一致、顺序一致：${SECTIONS.join(' / ')}
+- 药物机制章节开头的受体 Ki 表格，与其下方 <p class="ki-note"> 注释行必须保留（若上一稿包含）
+- 纯 Markdown；禁止 LaTeX（$ 或 $$）；禁止代码围栏（\`\`\`）；禁止一级标题（# ）
+- 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）
+- 总字数 2500-3500 字`
+    : `- 保持受体的自由百科结构（### 小节可保留）；禁止一级标题（# ）、代码围栏（\`\`\`）、LaTeX（$）
+- 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）
+- 总字数 800-2500 字`;
+  return `你上一次为${name}输出的词条正文未通过自动校验/审稿。
 
 **必须修正的问题**：
 ${errors.map((e) => `- ${e}`).join('\n')}
 
 **硬性要求（再强调）**：
-- 必须包含且仅包含以下 9 个章节，标题逐字一致、顺序一致：${SECTIONS.join(' / ')}
-- 药物机制章节开头的受体 Ki 表格，与其下方 <p class="ki-note"> 注释行必须保留（若上一稿包含）
-- 纯 Markdown；禁止 LaTeX（$ 或 $$）；禁止代码围栏（\`\`\`）；禁止一级标题（# ）
-- 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）
-- 总字数 2500-3500 字
+${hardRules}
 
 请**重新输出完整正文**（不要解释、不要道歉、不要代码块标记）。
 
 上一次的输出如下（在此基础上修正，不要把已经正确的内容改坏）：
 
 ${previous.slice(0, 6000)}`;
+};
 
 /* ------------------------------------------------------------------ */
 /* 模型调用（含重试与 mock）                                           */
 /* ------------------------------------------------------------------ */
 
-async function callGemini(prompt, { json = false, model } = {}) {
+async function callGemini(prompt, { json = false, model, search = false } = {}) {
   const { GoogleGenAI } = await import('@google/genai');
   const ai = new GoogleGenAI({
     apiKey: API_KEY,
@@ -405,11 +428,17 @@ async function callGemini(prompt, { json = false, model } = {}) {
           temperature: TEMPERATURE,
           topP: 0.8,
           maxOutputTokens: 24000,
-          ...(json ? { responseMimeType: 'application/json' } : {}),
+          // grounding 与 responseMimeType 不兼容：搜索模式靠宽容解析提取 JSON
+          ...(json && !search ? { responseMimeType: 'application/json' } : {}),
+          ...(search ? { tools: [{ googleSearch: {} }] } : {}),
         },
       });
       const text = (typeof res.text === 'string' ? res.text : '') || '';
       if (!text.trim()) throw new Error('模型返回了空内容');
+      if (search) {
+        const queries = res.candidates?.[0]?.groundingMetadata?.webSearchQueries ?? [];
+        if (queries.length) console.log(`   🔎 审稿检索：${queries.slice(0, 4).join('；')}`);
+      }
       const u = res.usageMetadata ?? {};
       usage.calls += 1;
       usage.prompt += u.promptTokenCount ?? 0;
@@ -446,28 +475,60 @@ const parseJsonBlock = (text) => {
     .replace(/^\s*```(?:json)?\s*/i, '')
     .replace(/\s*```\s*$/i, '')
     .trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // grounding 模式下没有 responseMimeType，模型可能混入叙述文字：提取首个 {...} 块
+    const m = String(text).match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new Error('返回内容中找不到 JSON');
+  }
 };
 
 /* ------------------------------------------------------------------ */
 /* 校验                                                                */
 /* ------------------------------------------------------------------ */
 
-/** 审稿提示（双 AI 流水线）：由审稿模型挑出真问题，回喂给生成模型修复 */
-const buildReviewPrompt = ({ data, body }) => `你是资深精神科临床药师，正在审阅本站词条《${data.name_cn}（${data.name_en}）》的正文草稿。
+/** 审稿提示（双 AI 流水线）：由审稿模型挑出真问题，回喂给生成模型修复。
+ *  药物 data 传 name_cn/name_en/pk_data，受体 data 传 title/subtitle，两者兼容。 */
+const buildReviewPrompt = ({ data, body }) => {
+  const cn = data.name_cn ?? data.title ?? '';
+  const en = data.name_en ?? data.subtitle ?? '';
+  const fm = data.name_cn
+    ? JSON.stringify({ tags: data.tags, pearls: data.pearls?.map((p) => p.title) }, null, 1)
+    : JSON.stringify({ description: data.description }, null, 1);
+  return `你是精神科临床药师兼循证医学审稿人，正在审阅本站词条《${cn}（${en}）》的草稿。这是给临床医生看的药理学速查百科，立场是循证、中立、去营销化。
 
-只挑真问题，不吹毛求疵。审阅重点：
-1. 内部矛盾：正文与关键参数（如半衰期 ${data.pk_data?.half_life ?? '—'}、蛋白结合率 ${data.pk_data?.protein_binding ?? '—'}）互相打架；
-2. 剂量红线：出现超过该药已知最大剂量的推荐、或明显错误的给药途径；
-3. 事实硬伤：受体/机制描述与该药已知药理学明显冲突；
-4. 与既有临床共识严重相悖且未加 [需核实] 标注的表述。
+frontmatter 摘要（${fm}）
 
-输出**严格的 JSON**（不要代码块）：{"issues": ["具体问题（指出位置与建议改法）", ...]}
-没有问题就输出 {"issues": []}。最多 5 条，按严重程度排序。
+只挑真问题，不吹毛求疵，但以下四类必须逐条对照检查：
+
+**A.【硬伤】**
+1. 内部矛盾：正文与关键参数${data.pk_data ? `（半衰期 ${data.pk_data.half_life ?? '—'}、蛋白结合率 ${data.pk_data.protein_binding ?? '—'}）` : ''}互相打架；
+2. 剂量红线：超过该药已知最大剂量的推荐、明显错误的给药途径；
+3. 受体/机制描述与该靶点已知药理学明显冲突。
+
+**B.【循证】**
+4. 地位断言：出现"首选/一线/金标准/最佳/标准治疗"时，必须有指南推荐或头对头 RCT/荟萃分析支撑。同类药物之间（各 SSRI 之间、各 SGA 之间）没有优效证据时，不得写谁优于谁——典型错误示例：说某 SSRI 是强迫症"首选"，但指南并未首选推荐它，Meta 分析也不显示它比其他 SSRI 更强；
+5. 机制当事实：把受体药理推论写成既成临床结局。典型错误示例："拮抗 5-HT3 因而对冲了胃肠道反应、消化道不良反应极轻微"——伏硫西汀的恶心发生率实际约 20%，并不低于普通 SSRI。机制推论必须用"理论上/有望/厂商宣称"措辞；已知试验数据与理论预期相反时必须如实指出。
+
+**C.【hype】**
+6. 营销式用语："卓越/完美/彻底改变/革命性/里程碑/强效逆转/独一无二/金标准"等——药企发布会语言不许出现在医生查的词条里，要求改为具体数据或中性表述（有指南/文献确凿支持的金标准除外，如氯氮平之于难治性精神分裂症、锂盐之于双相维持）。
+
+**D.【过时】**
+7. 批准状态/适应症/指南推荐的表述：你的知识可能滞后。凡写"已获/尚未获 XX 批准""指南推荐为"的句子，若无法确认为最新状态，指出并建议加 [需核实]。
+
+**本站正确范式**（审稿对照）：
+- "对强迫思维和行为有较好的疗效。但 Meta 分析并不认为氟伏沙明治强迫症比其他 SSRI 更好，指南也并未首选推荐氟伏沙明。"
+- "理论上可××，但缺乏 RCT 证据支持。"
+
+输出**严格的 JSON**（不要代码块、不要叙述）：{"issues": ["[硬伤|循证|hype|过时] 位置 + 问题 + 建议改法", ...]}
+没有问题就输出 {"issues": []}。最多 10 条，按严重程度排序。
 
 --- 正文开始 ---
 ${body.slice(0, 12000)}
 --- 正文结束 ---`;
+};
 
 /**
  * 规整模型输出：拆掉整篇代码围栏包装、剔除一级标题（站点的词条名标题单独渲染，
@@ -492,6 +553,12 @@ function normalizeBody(text) {
   return { text: out, notes };
 }
 
+/** 收集正文里的营销式用语命中（warning 级） */
+function collectHype(text) {
+  HYPE_RE.lastIndex = 0;
+  return text.match(HYPE_RE) ?? [];
+}
+
 function validateBody(text) {
   const errors = [];
   const warnings = [];
@@ -511,6 +578,8 @@ function validateBody(text) {
   const positions = SECTIONS.map((s) => text.indexOf(s)).filter((p) => p >= 0);
   const sorted = [...positions].sort((a, b) => a - b);
   if (positions.join() !== sorted.join()) warnings.push('章节顺序与要求不一致');
+  const hypeHits = collectHype(text);
+  if (hypeHits.length) warnings.push(`营销式用语 ${hypeHits.length} 处（${[...new Set(hypeHits)].join('/')}），请改为中性或数据表述`);
   return { errors, warnings, ok: errors.length === 0 };
 }
 
@@ -580,6 +649,45 @@ async function generateBody({ entry, reference, referenceFull, opts }) {
   return callGemini(prompt, { model: opts.model });
 }
 
+/** 双 AI 审稿循环（药物/受体共用）：审稿模型挑问题 → 回喂生成模型修复一轮 → 修复稿再过程序校验。
+ *  kind 决定修复 prompt 的硬性要求（药物 9 章节 / 受体自由结构）。 */
+async function runReviewLoop({ data, body, verdict, validate, opts, kind = 'drug' }) {
+  const result = { text: body, verdict, reviewed: false };
+  if (!verdict.ok || !REVIEW_MODEL || opts.mock || REVIEW_MODEL === opts.model) return result;
+  try {
+    const search = opts.search || GROUNDING;
+    console.log(`   🔍 审稿模型（${REVIEW_MODEL}${search ? ' + 搜索 grounding' : ''}）复核中…`);
+    const reviewRaw = await callGemini(buildReviewPrompt({ data, body }), {
+      json: true,
+      model: REVIEW_MODEL,
+      search,
+    });
+    const review = parseJsonBlock(reviewRaw);
+    const issues = Array.isArray(review?.issues) ? review.issues.filter((s) => typeof s === 'string' && s.trim()) : [];
+    if (!issues.length) {
+      console.log('   ✅ 审稿通过，无需修改');
+      return { ...result, reviewed: true };
+    }
+    issues.forEach((it, i) => console.log(`   💬 审稿意见 ${i + 1}：${it}`));
+    console.log('   ↻ 按审稿意见发起修复…');
+    const fixedRaw = await callGemini(
+      buildRepairPrompt({ data, previous: body, errors: issues, kind }),
+      { model: opts.model }
+    );
+    const fixed = normalizeBody(fixedRaw);
+    const fixedVerdict = validate(fixed.text);
+    if (fixedVerdict.ok || fixedVerdict.errors.length <= verdict.errors.length) {
+      console.log(`   ↻ 审稿修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
+      return { text: fixed.text, verdict: fixedVerdict, reviewed: true };
+    }
+    console.log('   ↻ 审稿修复未改善，保留审稿前版本');
+    return { ...result, reviewed: true };
+  } catch (error) {
+    console.log(`   ⚠️ 审稿环节失败（不影响出稿）：${String(error?.message ?? error).slice(0, 70)}`);
+    return result;
+  }
+}
+
 /**
  * 生成正文 + 校验；未通过时发起一次修复请求（把具体错误回喂给模型）。
  * 返回 { text, notes, verdict }
@@ -606,41 +714,15 @@ async function generateBodyChecked({ entry, reference, referenceFull, opts }) {
     }
   }
 
-  // 双 AI 审稿（可选，.env 设 GEMINI_REVIEW_MODEL 启用）：
-  // 审稿模型挑出的问题回喂给生成模型修复一轮，修复后再过一次程序校验
-  if (verdict.ok && REVIEW_MODEL && !opts.mock && REVIEW_MODEL !== opts.model) {
-    try {
-      console.log(`   🔍 审稿模型（${REVIEW_MODEL}）复核中…`);
-      const reviewRaw = await callGemini(buildReviewPrompt({ data: entry.data, body: normalized.text }), {
-        json: true,
-        model: REVIEW_MODEL,
-      });
-      const review = parseJsonBlock(reviewRaw);
-      const issues = Array.isArray(review?.issues) ? review.issues.filter((s) => typeof s === 'string' && s.trim()) : [];
-      if (!issues.length) {
-        console.log('   ✅ 审稿通过，无需修改');
-      } else {
-        issues.forEach((it, i) => console.log(`   💬 审稿意见 ${i + 1}：${it}`));
-        console.log('   ↻ 按审稿意见发起修复…');
-        const fixedRaw = await callGemini(
-          buildRepairPrompt({ data: entry.data, previous: normalized.text, errors: issues }),
-          { model: opts.model }
-        );
-        const fixed = normalizeBody(fixedRaw);
-        const fixedVerdict = validateBody(fixed.text);
-        if (fixedVerdict.ok || fixedVerdict.errors.length <= verdict.errors.length) {
-          normalized = fixed;
-          verdict = fixedVerdict;
-          console.log(`   ↻ 审稿修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
-        } else {
-          console.log('   ↻ 审稿修复未改善，保留审稿前版本');
-        }
-      }
-    } catch (error) {
-      console.log(`   ⚠️ 审稿环节失败（不影响出稿）：${String(error?.message ?? error).slice(0, 70)}`);
-    }
-  }
-  return { ...normalized, verdict };
+  // 双 AI 审稿（可选，.env 设 GEMINI_REVIEW_MODEL 启用；GEMINI_GROUNDING=1 / --search 加检索）
+  const reviewed = await runReviewLoop({
+    data: entry.data,
+    body: normalized.text,
+    verdict,
+    validate: validateBody,
+    opts,
+  });
+  return { text: reviewed.text, notes: normalized.notes, verdict: reviewed.verdict };
 }
 
 async function runRewrite(targets, entries, reference, referenceFull, opts) {
@@ -879,15 +961,19 @@ frontmatter 已包含的信息（不要重复表面内容，往深处写）：${
 - 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）；
 - 总字数 800-2500 字；
 - 严谨的医学中文，不确定处加 [需核实]；
+- 机制推导的临床获益写"理论上/厂商宣称"，不得写成既成事实；禁用"卓越/完美/彻底改变"等营销式形容词；
 - 不要任何前言或结语。`;
 
 function validateReceptorBody(text) {
   const errors = [];
+  const warnings = [];
   if (/^# /m.test(text)) errors.push('包含一级标题（# ）');
   if (/```/.test(text)) errors.push('包含代码围栏');
   if (/\$[^$\n]+\$/.test(text)) errors.push('包含 LaTeX（$）');
   if (text.replace(/\s/g, '').length < 400) errors.push('正文太短（<400 字）');
-  return { errors, warnings: [], ok: errors.length === 0 };
+  const hypeHits = collectHype(text);
+  if (hypeHits.length) warnings.push(`营销式用语 ${hypeHits.length} 处（${[...new Set(hypeHits)].join('/')}），请改为中性或数据表述`);
+  return { errors, warnings, ok: errors.length === 0 };
 }
 
 async function generateReceptorEntry({ nameCn, nameEn }, opts, drugEntries, principlesDir) {
@@ -958,7 +1044,10 @@ async function generateReceptorEntry({ nameCn, nameEn }, opts, drugEntries, prin
   let verdict = validateReceptorBody(normalized.text);
   if (!verdict.ok) {
     console.log(`   ↻ 正文未通过校验，发起一次修复：${verdict.errors.join('；')}`);
-    const fixedRaw = await callGemini(buildRepairPrompt({ data: parsed.data, previous: normalized.text, errors: verdict.errors }), { model: opts.model });
+    const fixedRaw = await callGemini(
+      buildRepairPrompt({ data: parsed.data, previous: normalized.text, errors: verdict.errors, kind: 'receptor' }),
+      { model: opts.model }
+    );
     const fixed = normalizeBody(fixedRaw);
     const fixedVerdict = validateReceptorBody(fixed.text);
     if (fixedVerdict.ok || fixedVerdict.errors.length < verdict.errors.length) {
@@ -967,6 +1056,17 @@ async function generateReceptorEntry({ nameCn, nameEn }, opts, drugEntries, prin
       console.log(`   ↻ 修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
     }
   }
+  // 双 AI 审稿：受体流程同样接入（GEMINI_REVIEW_MODEL；GEMINI_GROUNDING=1 / --search 加检索）
+  const reviewed = await runReviewLoop({
+    data: parsed.data,
+    body: normalized.text,
+    verdict,
+    validate: validateReceptorBody,
+    opts,
+    kind: 'receptor',
+  });
+  normalized = { text: reviewed.text };
+  verdict = reviewed.verdict;
   if (!verdict.ok && !opts.lenient) {
     console.error(`   ❌ 正文校验未通过，已拒绝写盘：${verdict.errors.join('；')}`);
     return [{ id, ok: false, error: verdict.errors.join('；') }];
@@ -1035,6 +1135,25 @@ async function main() {
     process.exit(1);
   }
 
+  // grounding 连通性自测：一次最小搜索调用，验证 google_search 工具是否可用
+  if (opts.testSearch) {
+    const testModel = REVIEW_MODEL || opts.model;
+    console.log(`🔌 Google Search Grounding 连通性测试（${testModel}）…`);
+    try {
+      const answer = await callGemini('用一句话回答：伏硫西汀最常见的不良反应是什么？', {
+        search: true,
+        model: testModel,
+      });
+      console.log(`   ✅ 通道可用。模型回答：${answer.trim().slice(0, 120)}`);
+      console.log('   可以在 .env 设 GEMINI_GROUNDING=1（或生成时加 --search）启用审稿检索。');
+    } catch (error) {
+      console.log(`   ❌ grounding 调用失败：${String(error?.message ?? error).slice(0, 200)}`);
+      console.log('   当前通道大概率不支持 google_search 工具，请保持离线审稿（不要设 GEMINI_GROUNDING）。');
+      process.exitCode = 1;
+    }
+    return;
+  }
+
   // 目标选择
   let targets = [];
   if (opts.newEntry) {
@@ -1066,8 +1185,9 @@ async function main() {
   npm run generate -- --all                        补齐缺失/不完整的词条
   npm run generate -- --all --force                全部重写
   npm run generate -- --new 中文名 [英文名]        AI 新建整条词条
+  npm run generate -- --test-search                自测审稿搜索 grounding 通道
 
-选项：--dry-run  --mock[=good|bad|short|latex]  --lenient  --yes  --delay=3000  --model=xxx`);
+选项：--dry-run  --mock[=good|bad|short|latex]  --lenient  --yes  --search  --delay=3000  --model=xxx`);
     return;
   }
 
@@ -1101,6 +1221,7 @@ function report(results) {
   }
   if (ok.length) {
     console.log('\n💡 请人工复核：PK 数值、适应症批准情况、雷达图分值；搜索正文中的 [需核实] 标记。');
+    if (!REVIEW_MODEL) console.log('   提示：.env 设 GEMINI_REVIEW_MODEL 可启用双 AI 循证审稿（hype/过时/地位断言）。');
     console.log('   预览：npm run dev（或双击 tools/启动网站.bat）');
   }
   if (bad.length) process.exitCode = 1;
