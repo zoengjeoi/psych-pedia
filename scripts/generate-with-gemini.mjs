@@ -227,6 +227,12 @@ ${existingBody ? `\n**现有内容（供参考，可保留其中准确的部分�
 
 包括：批准的适应症、常见超说明书用法、特殊人群适应症。
 
+**批准列的硬规则（极易出错，务必遵守）**：
+- 三列必须分别以各自官方说明书为准：NMPA 列 = NMPA 批准的中文说明书；FDA 列 = 美国说明书；EMA 列 = 欧盟 SmPC。
+- **中国说明书通常比 FDA 保守得多，绝不要把 FDA 的适应症默认当作中国也已批准**。典型错误：舍曲林在中国只获批抑郁症和强迫症，却被标成惊恐障碍、PTSD 也已批准。
+- 吃不准的批准状态**用 ❔ 并加 [需核实]**，宁缺毋滥——把未批准的写成 ✅ 是严重错误。
+- 某适应症在某地区未获批但在中国属公认超说明书用法（尤其被《广东省药学会超药品说明书用药目录》等权威目录收录）时：该列填 ❌，备注写明"超说明书用法"及目录来源。
+
 ## 药物代谢和服药方式
 
 ### 表1: 剂型与用法用量
@@ -515,8 +521,9 @@ frontmatter 摘要（${fm}）
 **C.【hype】**
 6. 营销式用语："卓越/完美/彻底改变/革命性/里程碑/强效逆转/独一无二/金标准"等——药企发布会语言不许出现在医生查的词条里，要求改为具体数据或中性表述（有指南/文献确凿支持的金标准除外，如氯氮平之于难治性精神分裂症、锂盐之于双相维持）。
 
-**D.【过时】**
-7. 批准状态/适应症/指南推荐的表述：你的知识可能滞后。凡写"已获/尚未获 XX 批准""指南推荐为"的句子，若无法确认为最新状态，指出并建议加 [需核实]。
+**D.【过时与批准状态】**
+7. **「临床适应症」表格的三列（NMPA/FDA/EMA）逐行核对**：中国列以 NMPA 中文说明书为准，FDA 列以美国说明书为准，EMA 列以欧盟 SmPC 为准。**中国说明书通常比 FDA 保守，误把 FDA 已批准的适应症标成中国也批准，是本库最高频的错误**——典型错误示例：舍曲林在中国只获批抑郁症和强迫症，却被标成惊恐障碍、PTSD 也已批准。吃不准的应改为 ❔ 并标注 [需核实]，而不是打 ✅；某适应症在中国属超说明书用法（尤其被《广东省药学会超药品说明书用药目录》收录）时，中国列填 ❌、备注写明超说明书与目录来源；
+8. 其他批准状态/指南推荐的表述：凡写"已获/尚未获 XX 批准""指南推荐为"的句子，若无法确认为最新状态，指出并建议加 [需核实]。
 
 **本站正确范式**（审稿对照）：
 - "对强迫思维和行为有较好的疗效。但 Meta 分析并不认为氟伏沙明治强迫症比其他 SSRI 更好，指南也并未首选推荐氟伏沙明。"
@@ -653,10 +660,10 @@ async function generateBody({ entry, reference, referenceFull, opts }) {
  *  kind 决定修复 prompt 的硬性要求（药物 9 章节 / 受体自由结构）。 */
 async function runReviewLoop({ data, body, verdict, validate, opts, kind = 'drug' }) {
   const result = { text: body, verdict, reviewed: false };
-  if (!verdict.ok || !REVIEW_MODEL || opts.mock || REVIEW_MODEL === opts.model) return result;
+  if (!verdict.ok || !REVIEW_MODEL || opts.mock) return result;
   try {
     const search = opts.search || GROUNDING;
-    console.log(`   🔍 审稿模型（${REVIEW_MODEL}${search ? ' + 搜索 grounding' : ''}）复核中…`);
+    console.log(`   🔍 审稿模型（${REVIEW_MODEL}${REVIEW_MODEL === opts.model ? '，与生成同款' : ''}${search ? ' + 搜索 grounding' : ''}）复核中…`);
     const reviewRaw = await callGemini(buildReviewPrompt({ data, body }), {
       json: true,
       model: REVIEW_MODEL,
