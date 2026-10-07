@@ -37,9 +37,9 @@ pearls:
       type: "warning"
       content: "采用OROS渗透泵控释技术，药物释放后空壳会随粪便排出。需提前告知患者，以免误以为药物未吸收。"
   -
-      title: "肝病首选"
+      title: "肝功能不全可用"
       type: "success"
-      content: "主要经肾脏排泄（59%原形），几乎不经过肝脏CYP450酶代谢。肝功能受损患者无需调整剂量，但肾功能不全者需减量。"
+      content: "主要经肾脏排泄（59%原形），几乎不经过肝脏CYP450酶代谢。肝功能受损患者通常无需调整剂量，但肾功能不全者需减量。"
 pk_data:
   half_life: "23h"
   protein_binding: "74%"

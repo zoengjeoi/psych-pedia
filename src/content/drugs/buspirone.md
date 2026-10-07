@@ -33,9 +33,9 @@ pearls:
       type: "success"
       content: "与苯二氮卓类不同，它无镇静、无肌肉松弛、无依赖性、无戒断反应。适合需保持清醒的患者（如驾驶员）。"
   -
-      title: "SSRIs的最佳拍档"
+      title: "SSRI 增效的常用搭档"
       type: "info"
-      content: "作为5-HT1A部分激动剂，常用于增强SSRI的抗抑郁效果，并可缓解SSRI引起的性功能障碍（如布什匹隆效应）。"
+      content: "作为5-HT1A部分激动剂，有时用于增强SSRI的抗抑郁效果（增效证据中等），也有人用其缓解SSRI引起的性功能障碍——但后者的临床证据有限，效果存在个体差异。"
   -
       title: "耐心是关键"
       type: "warning"

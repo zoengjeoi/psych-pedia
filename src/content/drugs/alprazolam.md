@@ -33,7 +33,7 @@ pearls:
   -
       title: "惊恐阻断剂"
       type: "success"
-      content: "起效极快（口服20分钟），是惊恐发作（Panic Attack）急性期的首选“灭火器”。"
+      content: "起效极快（口服20分钟），用于惊恐发作（Panic Attack）急性期的快速缓解。注意：惊恐障碍的长期一线治疗是 SSRI/SNRI，BZD 只宜短期或按需使用，长期使用有依赖风险。"
   -
       title: "“钟摆”效应"
       type: "danger"
