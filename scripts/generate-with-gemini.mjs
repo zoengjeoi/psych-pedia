@@ -319,7 +319,7 @@ ${existingBody ? `\n**现有内容（供参考，可保留其中准确的部分�
 | 用药依从性 | ... |
 
 ## 患者教育
-以 FAQ 形式给出 6-10 个患者常见问题：**Q1: ...** 换行 A: 详细回答（起效时间、疗程、能否骤停、副作用、合并用药、饮食要求等，按药物特点调整）。
+以 FAQ 形式给出 6-10 个患者常见问题，格式必须严格为：「**Q1: 问题**」（加粗、半角冒号）单独成段，下一段以「A: 详细回答」开头（起效时间、疗程、能否骤停、副作用、合并用药、饮食要求等，按药物特点调整）。禁止用「###」标题承载问题，禁止把整个章节写成纯要点列表；回答内部可用简短列表。
 
 ---
 
@@ -378,7 +378,7 @@ ${Array.from(principleIds).sort().join(', ')}
 
 要求：
 - pearls 3-4 条，类型分布合理（至少 1 条 danger 或 warning）。
-- 靶点选择以 Stahl 受体结合谱为准：凡亲和力或临床意义显著的受体都应纳入，包括 α1、5HT7 这类常被忽略的靶点（上限 8 个，按临床意义排序）。
+- 靶点只纳入临床意义明确的受体（亲和力显著且对该药的安全性或疗效有实际影响），最多 6 个，按临床意义排序；亲和力弱、临床意义不明确的靶点不要凑数。
 - 靶点亲和力请依据 Stahl 受体结合谱；把握不大的数值给 0-10 的合理估计，不要留空。
 - 任何无法确证的精确数值用 "[需核实]" 标注，不要编造。
 - 只输出 JSON 本身。`;
@@ -392,6 +392,7 @@ const buildRepairPrompt = ({ data, previous, errors, kind = 'drug' }) => {
   const hardRules = isDrug
     ? `- 必须包含且仅包含以下 9 个章节，标题逐字一致、顺序一致：${SECTIONS.join(' / ')}
 - 药物机制章节开头的受体 Ki 表格，与其下方 <p class="ki-note"> 注释行必须保留（若上一稿包含）
+- 患者教育必须保持 FAQ 格式：「**Q1: 问题**」（加粗、半角冒号）单独成段 + 下一段以「A: 回答」开头，6-10 条；不得改成 ### 标题或纯要点列表
 - 纯 Markdown；禁止 LaTeX（$ 或 $$）；禁止代码围栏（\`\`\`）；禁止一级标题（# ）
 - 受体名用 HTML 下标（如 5-HT<sub>2A</sub>）
 - 总字数 2500-3500 字`
@@ -585,6 +586,14 @@ function validateBody(text) {
   const positions = SECTIONS.map((s) => text.indexOf(s)).filter((p) => p >= 0);
   const sorted = [...positions].sort((a, b) => a - b);
   if (positions.join() !== sorted.join()) warnings.push('章节顺序与要求不一致');
+  // 患者教育 FAQ 格式（error 级：格式跑偏会触发修复重写，站内 56 个词条均为此格式）
+  const faqQs = (text.match(/\*\*Q\d+[:：]/g) || []).length;
+  const faqAs = (text.match(/^A[:：]/gm) || []).length;
+  if (faqQs < 5 || faqAs < 4) {
+    errors.push(
+      `患者教育必须写成 **Q1: 问题**（加粗、半角冒号，单独成段）+ 换行 A: 回答 的 FAQ 格式，6-10 条（当前识别到 ${faqQs} 个问题、${faqAs} 个回答）；不得用 ### 标题或纯要点列表承载`
+    );
+  }
   const hypeHits = collectHype(text);
   if (hypeHits.length) warnings.push(`营销式用语 ${hypeHits.length} 处（${[...new Set(hypeHits)].join('/')}），请改为中性或数据表述`);
   return { errors, warnings, ok: errors.length === 0 };
@@ -687,7 +696,7 @@ async function runReviewLoop({ data, body, verdict, validate, opts, kind = 'drug
       console.log(`   ↻ 审稿修复后：${fixedVerdict.ok ? '已通过校验' : '仍有问题 → ' + fixedVerdict.errors.join('；')}`);
       return { text: fixed.text, verdict: fixedVerdict, reviewed: true };
     }
-    console.log('   ↻ 审稿修复未改善，保留审稿前版本');
+    console.log(`   ↻ 审稿修复未改善（${fixedVerdict.errors.join('；').slice(0, 100)}），保留审稿前版本`);
     return { ...result, reviewed: true };
   } catch (error) {
     console.log(`   ⚠️ 审稿环节失败（不影响出稿）：${String(error?.message ?? error).slice(0, 70)}`);
