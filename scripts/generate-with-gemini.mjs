@@ -350,7 +350,7 @@ const buildFrontmatterPrompt = ({ nameCn, nameEn, principleIds }) => `你是精�
   "categories": ["从下面【分类清单】中逐字选取 1-3 个"],
   "tags": ["3-5 个中文短标签，如 镇静、低EPS、代谢友好"],
   "stahl_radar": {
-    "labels": ["4-8 个药理靶点——只纳入临床意义明确的靶点（亲和力显著且对该药的安全性或疗效有实际影响）；亲和力弱、临床意义不明确的靶点不要勉强凑数，雷达图宁精勿杂"],
+    "labels": ["最多 6 个药理靶点（一般 4-6 个）——只纳入临床意义明确的靶点（亲和力显著且对该药的安全性或疗效有实际影响）；亲和力弱、临床意义不明确的靶点不要勉强凑数，雷达图宁精勿杂"],
     "values": [与 labels 一一对应的 0-10 数字（10 = 亲和力最高）],
     "link_ids": [与 labels 一一对应的受体 id，只能取下面的【受体 id 清单】]
   },
@@ -597,7 +597,7 @@ function validateNewEntry(data, { principleIds, existingIds, id, allowExisting =
   const labels = Array.isArray(radar.labels) ? radar.labels : [];
   const values = Array.isArray(radar.values) ? radar.values : [];
   const linkIds = Array.isArray(radar.link_ids) ? radar.link_ids : [];
-  if (labels.length < 4 || labels.length > 8) issues.push(`靶点数量应为 4-8 个（实际 ${labels.length}）`);
+  if (labels.length < 4 || labels.length > 6) issues.push(`靶点数量应为 4-6 个（实际 ${labels.length}）`);
   if (values.length !== labels.length) issues.push('values 与 labels 数量不一致');
   if (linkIds.length !== labels.length) issues.push('link_ids 与 labels 数量不一致');
   values.forEach((v, i) => {
