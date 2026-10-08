@@ -18,8 +18,6 @@ stahl_radar:
     - D3
     - 5-HT7
     - 5-HT2C
-    - α1
-    - H1
   values:
     - 9.5
     - 8.5
@@ -27,8 +25,6 @@ stahl_radar:
     - 8
     - 7
     - 6
-    - 5
-    - 4
   link_ids:
     - d2
     - 5ht2a
@@ -36,8 +32,6 @@ stahl_radar:
     - d3
     - 5ht7
     - 5ht2c
-    - alpha1
-    - h1
 pearls:
   - title: 静坐不能与早期激活风险
     type: warning
