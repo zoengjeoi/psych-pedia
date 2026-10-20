@@ -12,12 +12,21 @@ stahl_radar:
   labels:
     - "OX1R"
     - "OX2R"
+    - "H1"
+    - "M1"
+    - "D2"
   values:
     - 9
     - 9.5
+    - 0
+    - 0
+    - 0
   link_ids:
     - ""
     - ""
+    - "h1"
+    - "m1"
+    - "d2"
 pearls:
   -
       title: "长半衰期的双刃剑"

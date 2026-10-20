@@ -3,7 +3,7 @@ id: acamprosate
 name_cn: 阿坎酸
 name_en: Acamprosate
 categories:
-  - 抗癫痫药（心境辅助）
+  - 戒酒治疗
 tags:
   - 戒酒维持
   - NMDA调节
@@ -16,22 +16,20 @@ stahl_radar:
     - 谷氨酸假说
     - GABA-A受体
     - 多巴胺假说
+    - H1
   values:
     - 7.5
     - 8
     - 5
     - 4
+    - 0
   link_ids:
     - nmda
     - glutamate-hypothesis
     - gabaa
     - dopamine-hypothesis
+    - h1
 pearls:
-  - title: 肾功能是剂量红线
-    type: danger
-    content: >-
-      阿坎酸近100%以原型经肾脏排泄，用药前必须评估肌酐清除率（CrCl）。轻中度肾功能不全（CrCl 30-50
-      mL/min）剂量减半至333mg每日三次；重度肾功能不全（CrCl < 30 mL/min）严禁使用，以防蓄积中毒。
   - title: 定位于维持戒断而非急性脱毒
     type: info
     content: >-
@@ -39,11 +37,11 @@ pearls:
   - title: 肝病患者的理想选择
     type: success
     content: >-
-      不经过肝脏CYP450酶系代谢，无肝脏毒性，也不与酒精发生双硫仑样反应。对于合并酒精性脂肪肝、酒精性肝炎或代偿期肝硬化等肝功能受损的依赖患者，其安全性显著优于双硫仑和纳曲酮。
-  - title: 服药负担重与消化道反应
-    type: warning
+      不经过肝脏CYP450酶系代谢，无肝脏毒性，也不与酒精发生双硫仑样反应。对于肝功能受损的依赖患者，其安全性显著优于双硫仑和纳曲酮。阿坎酸近100%以原型经肾脏排泄，用药前必须评估肌酐清除率
+  - title: 中国没有上市
+    type: danger
     content: >-
-      生物利用度极低（约11%），标准方案为每次666mg（2片）、每日3次，大药片与高频次给药严重挑战患者依从性。最常见不良反应为腹泻（约10-17%），多呈剂量相关性且轻微短暂，随餐服用可改善耐受性。
+      所以本词条感兴趣的看看就好；只能羡慕老外有这么好用的药，哎
 pk_data:
   half_life: 20-33h
   protein_binding: < 5%
