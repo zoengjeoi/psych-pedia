@@ -3,7 +3,7 @@ id: "flupentixol_melitracen"
 name_cn: "氟哌噻吨美利曲辛 (黛力新)"
 name_en: "Flupentixol-Melitracen (Deanxit)"
 categories:
-  - "复方制剂（抗抑郁+抗精神病）"
+  - "复方制剂"
   - "FGA（典型抗精神病药）"
   - "TCA（三环类抗抑郁药）"
 tags:

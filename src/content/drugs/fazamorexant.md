@@ -12,12 +12,21 @@ stahl_radar:
   labels:
     - "OX1R"
     - "OX2R"
+    - "H1"
+    - "M1"
+    - "D2"
   values:
     - 9.3
     - 9.3
+    - 0
+    - 0
+    - 0
   link_ids:
     - ""
     - ""
+    - "h1"
+    - "m1"
+    - "d2"
 pearls:
   -
       title: "国产首个自主研发DORA"

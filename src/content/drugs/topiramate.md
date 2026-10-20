@@ -4,6 +4,7 @@ name_cn: "托吡酯"
 name_en: "Topiramate"
 categories:
   - "抗癫痫药（心境辅助）"
+  - "戒酒治疗"
 tags:
   - "减肥"
   - "认知减退"

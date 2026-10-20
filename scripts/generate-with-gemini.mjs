@@ -347,15 +347,15 @@ const buildFrontmatterPrompt = ({ nameCn, nameEn, principleIds }) => `你是精�
 字段与约束：
 {
   "name_en": "英文通用名（小写首字母大写风格，如 Olanzapine）",
-  "categories": ["从下面【分类清单】中逐字选取 1-3 个"],
+  "categories": ["从下面【分类清单】中逐字选取 1-3 个；优先最具体的分类，确实无法归类时才用「其他药物」"],
   "tags": ["3-5 个中文短标签，如 镇静、低EPS、代谢友好"],
   "stahl_radar": {
-    "labels": ["最多 6 个药理靶点（一般 4-6 个）——只纳入临床意义明确的靶点（亲和力显著且对该药的安全性或疗效有实际影响）；亲和力弱、临床意义不明确的靶点不要勉强凑数，雷达图宁精勿杂"],
-    "values": [与 labels 一一对应的 0-10 数字（10 = 亲和力最高）],
-    "link_ids": [与 labels 一一对应的受体 id，只能取下面的【受体 id 清单】]
+    "labels": ["5-6 个药理靶点（仅当该药机制能用受体/靶点亲和力直观表达时才画雷达）——先列临床意义明确的靶点，再用 0 值补齐常见对照受体（如 H1、M1、D2、5-HT2A、α1 等），保证五角/六角形；无实际作用的靶点 value 写 0。若机制主要是通路、酶、通道复合体或非受体机制（如锂盐、丙戊酸、丹曲林、氘丁苯那嗪），把整个 stahl_radar 设为 null，不要强行凑靶点"],
+    "values": [与 labels 一一对应的 0-10 数字（10 = 亲和力最高，无作用写 0）],
+    "link_ids": [与 labels 一一对应的受体 id，优先取下面的【受体 id 清单】；清单中没有对应受体的靶点可留空字符串]
   },
   "pearls": [
-    { "title": "短标题", "type": "danger|warning|success|info", "content": "60-120 字的临床实战要点" }
+    { "title": "短标题", "type": "danger|warning|success|info", "content": "30-70 字、最多两句话，只写该药最有特点/最区别于其他药物/最值得注意的点" }
   ],
   "pk_data": {
     "half_life": "如 30-33h（不确定则 [需核实]）",
@@ -377,11 +377,26 @@ ${DRUG_CATEGORY_ORDER.map((c) => `- ${c}`).join('\n')}
 ${Array.from(principleIds).sort().join(', ')}
 
 要求：
-- pearls 3-4 条，类型分布合理（至少 1 条 danger 或 warning）。
-- 靶点只纳入临床意义明确的受体（亲和力显著且对该药的安全性或疗效有实际影响），最多 6 个，按临床意义排序；亲和力弱、临床意义不明确的靶点不要凑数。
-- 靶点亲和力请依据 Stahl 受体结合谱；把握不大的数值给 0-10 的合理估计，不要留空。
+- pearls 3-4 条，类型分布合理（至少 1 条 danger 或 warning）；每条 30-70 字、最多两句话，只写该药最有特点、最区别于其他药物或最值得注意的点（例如文拉法辛的「阶梯效应」「升压风险」「闪电撤药」），不要复述通用药理或完整机制。
+- 雷达只在该药机制能用受体/靶点亲和力直观表达时使用：默认 5-6 轴，先列明确靶点，再用 0 值补齐常见对照受体（H1、M1、D2、5-HT2A、α1 等）；无实际作用的靶点 value 写 0，不要编造亲和力。若机制是通路、酶、通道复合体或非受体机制（如锂盐、丙戊酸、丹曲林、氘丁苯那嗪），把整个 stahl_radar 设为 null，不要强行画——弄巧成拙比不画更糟。
+- 靶点亲和力请依据 Stahl 受体结合谱；有明确作用但把握不大的数值给 0-10 的合理估计；确实无作用的写 0。
 - 任何无法确证的精确数值用 "[需核实]" 标注，不要编造。
 - 只输出 JSON 本身。`;
+
+/** frontmatter 校验失败时的修复提示：把具体字段问题回喂给模型，要求完整重出 JSON。
+ *  与正文修复循环同一思路——只返修有限轮次，仍不合格就拒绝新建，绝不写半成品。 */
+const buildFrontmatterRepairPrompt = ({ nameCn, nameEn, previous, issues, principleIds }) => {
+  const previousText = typeof previous === 'string' ? previous : JSON.stringify(previous, null, 2);
+  return `${buildFrontmatterPrompt({ nameCn, nameEn, principleIds })}
+
+你上一次输出的 frontmatter JSON 未通过自动校验，必须修正以下问题：
+${issues.map((e) => `- ${e}`).join('\n')}
+
+上一次的输出（在此基础上修正，已经正确的字段不要改坏）：
+${previousText}
+
+请重新输出修正后的完整 JSON（只输出 JSON 本身）。`;
+};
 
 /** 校验未通过时的修复提示：把具体问题回喂给模型，要求完整重出 */
 const buildRepairPrompt = ({ data, previous, errors, kind = 'drug' }) => {
@@ -550,6 +565,13 @@ function normalizeBody(text) {
     out = fenced[1].trim();
     notes.push('已拆掉整篇代码围栏');
   }
+  // 修复稿偶尔会残留包裹正文的 ``` 行（甚至夹在说明文字中间）。以前这种稿子会被
+  // validateBody 判为“包含代码围栏”而整份丢弃，审稿意见全部白费；这里直接剥掉围栏行，
+  // 保留正文内容，让后续校验按真实内容判断。
+  if (/^\s*```/m.test(out)) {
+    out = out.replace(/^\s*```(?:markdown|md)?\s*$/gim, '').trim();
+    notes.push('已移除残留代码围栏');
+  }
   const h1s = out.match(/^#\s+\S.*$/gm);
   if (h1s) {
     out = out
@@ -602,19 +624,25 @@ function validateBody(text) {
 function validateNewEntry(data, { principleIds, existingIds, id, allowExisting = false }) {
   const issues = [];
   if (!data || typeof data !== 'object') return ['模型返回的不是 JSON 对象'];
-  const radar = data.stahl_radar ?? {};
-  const labels = Array.isArray(radar.labels) ? radar.labels : [];
-  const values = Array.isArray(radar.values) ? radar.values : [];
-  const linkIds = Array.isArray(radar.link_ids) ? radar.link_ids : [];
-  if (labels.length < 4 || labels.length > 6) issues.push(`靶点数量应为 4-6 个（实际 ${labels.length}）`);
-  if (values.length !== labels.length) issues.push('values 与 labels 数量不一致');
-  if (linkIds.length !== labels.length) issues.push('link_ids 与 labels 数量不一致');
-  values.forEach((v, i) => {
-    if (typeof v !== 'number' || Number.isNaN(v) || v < 0 || v > 10) issues.push(`values[${i}] 不是 0-10 的数字`);
-  });
-  linkIds.forEach((v) => {
-    if (!principleIds.has(String(v))) issues.push(`link_id "${v}" 不在受体清单中`);
-  });
+  const radar = data.stahl_radar;
+  // null = 机制不适合用受体雷达表达（通路/酶/通道/非受体机制），不强行凑靶点
+  if (radar !== null) {
+    const labels = Array.isArray(radar?.labels) ? radar.labels : [];
+    const values = Array.isArray(radar?.values) ? radar.values : [];
+    const linkIds = Array.isArray(radar?.link_ids) ? radar.link_ids : [];
+    if (!labels.length) {
+      issues.push('缺少 stahl_radar（若机制不适合受体雷达，请把整个 stahl_radar 显式设为 null）');
+    } else if (labels.length < 5 || labels.length > 6) {
+      issues.push(`靶点数量应为 5-6 个（实际 ${labels.length}）；无实际作用的靶点请用 0 值补齐到 5-6 个，保证五角/六角形`);
+    }
+    if (labels.length && values.length !== labels.length) issues.push('values 与 labels 数量不一致');
+    if (labels.length && linkIds.length !== labels.length) issues.push('link_ids 与 labels 数量不一致');
+    values.forEach((v, i) => {
+      if (typeof v !== 'number' || Number.isNaN(v) || v < 0 || v > 10) issues.push(`values[${i}] 不是 0-10 的数字`);
+    });
+  }
+  // 受体清单外的 link_id 不阻断新建：RadarChart 会自动把标签降级为纯文本（防 404）。
+  // 存量数据里本就有 opioid_mu / beta1 / sv2a 等未建受体页的靶点，硬拒会挡住跨科药物。
   const cats = Array.isArray(data.categories) ? data.categories : [];
   if (!cats.length) issues.push('categories 不能为空');
   cats.forEach((c) => {
@@ -625,11 +653,19 @@ function validateNewEntry(data, { principleIds, existingIds, id, allowExisting =
   pearls.forEach((p, i) => {
     if (!p?.title || !p?.content) issues.push(`pearls[${i}] 缺少 title 或 content`);
     if (!['danger', 'warning', 'success', 'info'].includes(p?.type)) issues.push(`pearls[${i}].type 非法（${p?.type}）`);
+    const len = String(p?.content ?? '').length;
+    if (len > 90) issues.push(`pearls[${i}] 过长（${len} 字，要求 ≤90 字；只保留该药最有特点/最值得注意的点）`);
   });
   if (!data.pk_data || typeof data.pk_data !== 'object') issues.push('缺少 pk_data');
   if (!data.name_en) issues.push('缺少 name_en');
   if (!allowExisting && existingIds.has(id)) issues.push(`词条 id "${id}" 已存在（与现有词条或受体重名）`);
   return issues;
+}
+
+/** 受体清单外的 link_id（非错误，仅提示）：雷达图标签会降级为纯文本 */
+function unknownLinkIds(data, principleIds) {
+  const linkIds = Array.isArray(data?.stahl_radar?.link_ids) ? data.stahl_radar.link_ids : [];
+  return [...new Set(linkIds.map((v) => String(v ?? '')).filter((v) => v && !principleIds.has(v)))];
 }
 
 /* ------------------------------------------------------------------ */
@@ -814,55 +850,127 @@ function parseNewNames(positional) {
   return jobs;
 }
 
-async function generateNewEntry({ nameCn, nameEn }, opts, principleIds, existingIds, reference, referenceFull) {
-  console.log(`\n🆕 新建词条：${nameCn}${nameEn ? ` / ${nameEn}` : ''}`);
-
-  // 1) frontmatter（结构化 JSON）
-  let fm;
-  if (opts.mock) {
-    fm = JSON.parse(JSON.stringify(matter(fs.readFileSync(path.join(DRUGS_DIR, 'clozapine.md'), 'utf-8')).data));
-    fm.name_en = nameEn || fm.name_en;
-    fm.id = undefined;
-  } else {
-    const raw = await callGemini(
-      buildFrontmatterPrompt({ nameCn, nameEn, principleIds }),
-      { json: true, model: opts.model }
-    );
-    try {
-      fm = parseJsonBlock(raw);
-    } catch (error) {
-      console.error(`   ❌ frontmatter JSON 解析失败：${error.message}`);
-      return [{ id: nameCn, ok: false, error: 'JSON 解析失败' }];
-    }
-  }
-
-  // id 推导优先级：显式 --id > 模型返回的英文名 > 命令行英文名。
-  // 千万不能用中文名兜底——中文 slugify 后为空，会写出隐藏文件 drugs/.md。
-  const id = opts.id || slugifyId(fm.name_en || nameEn || '');
-  if (!id) {
-    console.error(`   ❌ 无法为「${nameCn}」推导出合法词条 id（需要英文名）。`);
-    console.error(`      请改用：npm run generate -- --new ${nameCn} 英文名  或  --id=自定义id`);
-    return [{ id: nameCn, ok: false, error: '无法推导词条 id（缺英文名）' }];
-  }
-  // 注意展开顺序：id / name_cn 必须由我们决定，不能被模型返回的同名字段覆盖
+/** 对 frontmatter 做业务校验 + schema 校验，返回规整后的 data、错误与提示 */
+function checkFrontmatter(fm, { nameCn, id, principleIds, existingIds, allowExisting = false }) {
   const data = { ...fm, id, name_cn: nameCn };
-
-  // 2) 校验
-  const issues = validateNewEntry(data, { principleIds, existingIds, id, allowExisting: opts.force });
+  const issues = validateNewEntry(data, { principleIds, existingIds, id, allowExisting });
   const parsed = drugSchema.safeParse(data);
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       issues.push(`schema: ${issue.path.join('.') || '(root)'} — ${issue.message}`);
     }
   }
-  if (issues.length) {
+  const warnings = unknownLinkIds(data, principleIds).map(
+    (v) => `link_id "${v}" 不在受体清单中，雷达图标签会降级为纯文本（如需跳转请补充受体词条）`
+  );
+  return { data: parsed.success ? parsed.data : data, issues, warnings };
+}
+
+/** 生成 frontmatter 并在校验失败时把具体问题回喂给模型返修（最多两轮）。
+ *  id 碰撞/缺英文名属于用户侧问题，直接返回，不让模型改药名绕过。 */
+async function generateFrontmatterChecked({ nameCn, nameEn, opts, principleIds, existingIds }) {
+  let raw = await callGemini(buildFrontmatterPrompt({ nameCn, nameEn, principleIds }), {
+    json: true,
+    model: opts.model,
+  });
+  let previous = raw;
+  let id = '';
+  let issues = [];
+
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    let fm = null;
+    previous = raw;
+    try {
+      fm = parseJsonBlock(raw);
+    } catch (error) {
+      issues = [`frontmatter JSON 解析失败：${error.message}`];
+    }
+
+    if (fm) {
+      id = opts.id || slugifyId(fm.name_en || nameEn || '');
+      if (!id) {
+        issues = ['无法推导词条 id：缺少合法英文名（name_en）'];
+      } else if (existingIds.has(id) && !opts.force) {
+        return {
+          data: null,
+          id,
+          issues: [`词条 id "${id}" 已存在（与现有词条或受体重名；整体覆盖重写请加 --force）`],
+          warnings: [],
+          fatal: true,
+        };
+      } else {
+        const checked = checkFrontmatter(fm, {
+          nameCn,
+          id,
+          principleIds,
+          existingIds,
+          allowExisting: true,
+        });
+        if (!checked.issues.length) {
+          if (attempt > 0) console.log('   ✅ frontmatter 返修后已通过校验');
+          return { data: checked.data, id, issues: [], warnings: checked.warnings };
+        }
+        issues = checked.issues;
+      }
+    }
+
+    if (attempt === 2) break;
     console.error('   ❌ frontmatter 校验未通过：');
     issues.forEach((it) => console.error(`      - ${it}`));
-    return [{ id, ok: false, error: `frontmatter 校验失败（${issues.length} 项）` }];
+    console.log(`   ↻ 已把上述问题回喂给模型返修 frontmatter（第 ${attempt + 1}/2 轮）…`);
+    raw = await callGemini(
+      buildFrontmatterRepairPrompt({ nameCn, nameEn, previous, issues, principleIds }),
+      { json: true, model: opts.model }
+    );
   }
 
-  // 3) 正文
-  const target = { data: parsed.data, body: '' };
+  return { data: null, id, issues, warnings: [] };
+}
+
+async function generateNewEntry({ nameCn, nameEn }, opts, principleIds, existingIds, reference, referenceFull) {
+  console.log(`\n🆕 新建词条：${nameCn}${nameEn ? ` / ${nameEn}` : ''}`);
+
+  // 1) frontmatter（结构化 JSON；校验失败自动回喂返修，最多两轮）
+  let data = null;
+  let id = '';
+  let issues = [];
+  let warnings = [];
+  let fatal = false;
+
+  if (opts.mock) {
+    const fm = JSON.parse(JSON.stringify(matter(fs.readFileSync(path.join(DRUGS_DIR, 'clozapine.md'), 'utf-8')).data));
+    fm.name_en = nameEn || fm.name_en;
+    fm.id = undefined;
+    id = opts.id || slugifyId(fm.name_en || nameEn || '');
+    if (!id) {
+      issues = ['无法推导词条 id：缺少合法英文名（name_en）'];
+    } else {
+      const checked = checkFrontmatter(fm, { nameCn, id, principleIds, existingIds, allowExisting: opts.force });
+      data = checked.data;
+      issues = checked.issues;
+      warnings = checked.warnings;
+    }
+  } else {
+    const checked = await generateFrontmatterChecked({ nameCn, nameEn, opts, principleIds, existingIds });
+    data = checked.data;
+    id = checked.id;
+    issues = checked.issues;
+    warnings = checked.warnings;
+    fatal = Boolean(checked.fatal);
+  }
+
+  if (issues.length) {
+    console.error(`   ❌ frontmatter 校验未通过${fatal ? '' : opts.mock ? '' : '（已自动返修 2 轮）'}：`);
+    issues.forEach((it) => console.error(`      - ${it}`));
+    if (!id) {
+      console.error(`      请改用：npm run generate -- --new ${nameCn} 英文名  或  --id=自定义id`);
+    }
+    return [{ id: id || nameCn, ok: false, error: `frontmatter 校验失败（${issues.length} 项）` }];
+  }
+  warnings.forEach((w) => console.log(`   ⚠️  ${w}`));
+
+  // 2) 正文
+  const target = { data, body: '' };
   const { text, notes, verdict } = await generateBodyChecked({
     entry: target,
     reference,
@@ -876,7 +984,7 @@ async function generateNewEntry({ nameCn, nameEn }, opts, principleIds, existing
   }
   verdict.warnings.forEach((w) => console.warn(`   ⚠️  ${w}`));
 
-  const content = matter.stringify(`${text.trim()}\n`, parsed.data);
+  const content = matter.stringify(`${text.trim()}\n`, data);
   if (opts.dryRun) {
     console.log(`   🔎 dry-run：未写盘。frontmatter 预览：\n${content.split('\n').slice(0, 24).join('\n')}\n   …`);
     return [{ id, ok: true, length: text.length, dryRun: true }];

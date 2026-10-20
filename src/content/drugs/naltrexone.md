@@ -4,6 +4,7 @@ name_cn: 纳曲酮
 name_en: Naltrexone
 categories:
   - 慢性疼痛辅助药
+  - 戒酒治疗
 tags:
   - 阿片受体拮抗
   - 戒酒防复吸
